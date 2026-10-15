@@ -6,7 +6,7 @@ description: >
   performance optimization, accessibility, state management,
   code review, refactoring, debugging, build tooling,
   and frontend migrations."
-model: claude-sonnet-5
+model: sonnet
 color: purple
 memory: user
 ---

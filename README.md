@@ -7,7 +7,7 @@
 <p>
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude_Code-harness-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
   <img alt="Agents" src="https://img.shields.io/badge/agents-12-5A67D8?style=for-the-badge">
-  <img alt="Skills" src="https://img.shields.io/badge/skills-10-38A169?style=for-the-badge">
+  <img alt="Skills" src="https://img.shields.io/badge/skills-14-38A169?style=for-the-badge">
   <img alt="Install" src="https://img.shields.io/badge/install-symlinks-718096?style=for-the-badge&logo=gnubash&logoColor=white">
 </p>
 
@@ -54,22 +54,32 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    IS["issue-start<br/><sub>ветка, правила проекта</sub>"] --> PF["plan-feature<br/><sub>спека</sub>"]
-    PF --> PL["planner<br/><sub>план по ролям</sub>"]
-    PL --> DEV["frontend-dev · node-dev · devops-dev<br/>test-dev · e2e-dev"]
-    DEV --> REV["frontend-reviewer · backend-reviewer<br/>security-reviewer"]
-    REV -->|находки| DEV
-    REV -->|чисто| ID["issue-done<br/><sub>проверки, коммиты, PR</sub>"]
+    SP["spec<br/><sub>диалог, дизайн по секциям</sub>"] --> PP["planner<br/><sub>Mode: partitions</sub>"]
+    PP --> OK{{"спека утверждена"}}
+    OK --> PB["planner<br/><sub>Mode: brief</sub>"]
+    PB --> EX["исполнитель из ## SDD<br/><sub>в своём worktree</sub>"]
+    EX --> G["гейт<br/><sub>гоняет ведущий</sub>"]
+    G --> RV["ревьюер<br/><sub>одно ревью</sub>"]
+    RV --> FX["фикс-раунд<br/><sub>тот же исполнитель</sub>"]
+    FX --> MG["мерж --no-ff<br/><sub>в ветку фичи</sub>"]
+    MG -->|следующая партия| PB
+    MG -->|все партии| FR["итоговое ревью по слоям<br/><sub>+ security при флаге</sub>"]
+    FR --> PR["pr.md → PR<br/><sub>по команде владельца</sub>"]
 ```
 
-После правок по замечаниям второй круг ревью не запускается: проверки и дифф правок смотрит оркестратор (правило из `claude/CLAUDE.md`). Связку «скилл процесса → агент» доделывает [#001](issues/001-own-superpowers.md).
+- **`spec`** пишет спеку вместе с тобой: вопросы по одному, дизайн по секциям, разбиение на партии от `planner`.
+- **`sdd`** ведёт партии по таблице в спеке. Состояние живёт в файлах (`.claude/context/sdd/<фича>/`), поэтому после `/clear` работа продолжается с той же партии.
+- **Ревью одно, фикс один, повторного ревью нет.** Исполнителя не отпускают, пока не закончен его фикс-раунд.
+- **Мелкие задачи** на одну партию идут без SDD: `issue-start` → код → `issue-done`.
+
+Настройки проекта живут в разделе `## SDD` его `CLAUDE.md`: таблица «слой → исполнитель → ревьюер», команда гейта, основная ветка, тип репозитория (пет / рабочий), режим PR. Шаблон — `claude/skills/sdd/references/claude-md-sdd.md`. При первом запуске в проекте `sdd` спрашивает, рабочий это репозиторий или пет, и заполняет раздел сам. В рабочих репозиториях артефакты SDD уходят в `.git/info/exclude`, а `.gitignore` проекта не меняется.
 
 ## 🤖 Агенты
 
 | Агент | Модель | Режим | Что делает |
 |---|:---:|:---:|---|
 | **Планирование** ||||
-| `planner` | Opus | 👁️ | План реализации: задачи на один запуск агента, у каждой владелец, файлы и команда-проверка. Потом сам критикует план по чеклисту |
+| `planner` | Opus | 👁️ | Два режима: `partitions` режет дизайн на партии с владельцами из `## SDD`, `brief` пишет бриф партии, заново проверив каждую премиссу грепом |
 | **Разработка** ||||
 | `frontend-dev` | Sonnet | ✍️ | React / Next.js, Vue / Nuxt |
 | `node-dev` | Sonnet | ✍️ | Node.js / TypeScript бэкенд: NestJS, Fastify, Prisma, Postgres, Redis, WebSocket |
@@ -95,13 +105,18 @@ flowchart LR
 | Скилл | Когда срабатывает |
 |---|---|
 | **Процесс** ||
-| `issue-start` | «бери issue 7»: читает issue как спеку, создаёт ветку, грузит правила проекта |
-| `plan-feature` | «распиши план по #N»: спека в `.claude/context/specs/` |
+| `spec` | «распиши план по #N», «давай сделаем фичу»: спека с партиями |
+| `sdd` | «запускай SDD», «следующая партия»: партии через агентов, ревью, мерж, `pr.md` |
+| `issue-start` | «бери issue 7»: задача на одну партию — ветка, правила проекта |
 | `issue-done` | «issue готов»: критерии приёмки, зелёные проверки, коммиты по скоупам, PR |
 | `git-flow` | коммиты `type(scope): subject` с эмодзи; bootstrap ставит хук в любой репозиторий |
 | `project-checkpoint` | «сделай чекпоинт»: `STATUS.md` и хэндофф перед `/clear` |
+| **Дисциплина** (копии из superpowers 6.4.1, [VENDORED](claude/skills/VENDORED.md)) ||
+| `systematic-debugging` | баг или красный тест: сначала причина, потом правка |
+| `test-driven-development` | тест до кода, и он должен упасть |
+| `verification-before-completion` | перед словом «готово» — команда и её вывод |
 | **Проектирование** ||
-| `project-architect` | «хочу сделать X»: идея → проект-документ |
+| `project-architect` | «хочу сделать новое приложение X»: идея → проект-документ |
 | `domain-modeling` | словарь предметной области и ADR |
 | **Текст и дизайн** ||
 | `humanize` | любой текст-объяснение про код: убирает воду, требует адрес, число или поведение |
@@ -115,7 +130,7 @@ flowchart LR
 
 | Плагин | Зачем |
 |---|---|
-| `superpowers` | процесс brainstorming → plan → SDD. Будет заменён своими скиллами — [#001](issues/001-own-superpowers.md) |
+| `superpowers` | **отключён**: процесс заменён скиллами `spec` и `sdd`, debugging / TDD / verification скопированы — [#001](issues/001-own-superpowers.md) |
 | `playwright` | агент сам проходит сценарии в браузере |
 | `frontend-design` | визуальный дизайн |
 | `skill-creator` | создание и проверка скиллов |
@@ -161,8 +176,10 @@ ai-harness-config/
 ├── claude/                 → ставится в ~/.claude
 │   ├── CLAUDE.md           глобальные правила: ревью, комментарии в коде, атрибуция
 │   ├── agents/             12 агентов
-│   └── skills/             10 скиллов (git-flow/templates — шаблоны хука)
+│   └── skills/             14 скиллов (sdd/references — шаблоны артефактов, git-flow/templates — хук)
+├── docs/                   спеки и планы работ над харнессом
 ├── issues/                 открытые задачи по харнессу
+├── tests/                  lint-harness.sh, evals срабатывания скиллов
 ├── .githooks/commit-msg    проверка формата коммита + эмодзи
 ├── .gitflow                скоупы коммитов
 └── install.sh              симлинки в ~/.claude
@@ -172,7 +189,7 @@ ai-harness-config/
 
 | # | Задача | Статус |
 |---|---|---|
-| [001](issues/001-own-superpowers.md) | Свой SDD вместо superpowers: каждая роль процесса вызывает нашего агента | ⏸️ следующая |
+| [001](issues/001-own-superpowers.md) | Свой SDD вместо superpowers: каждая роль процесса вызывает нашего агента | 🧪 реализовано, ждёт прогонов |
 | [002](issues/002-context7-auth.md) | context7 по API-ключу вместо OAuth | 🔓 |
 | [003](issues/003-lsp-flaky.md) | LSP: починить или заменить хуком typecheck | 🔓 |
 | [004](issues/004-github-mcp-global.md) | GitHub MCP на уровне пользователя вместо `gh` | 🔓 |
@@ -180,11 +197,23 @@ ai-harness-config/
 | [006](issues/006-telegram.md) | Довести связку Telegram до рабочего состояния или удалить | ⏸️ |
 | [007](issues/007-harness-repo.md) | Хуки и `settings.json` в репозитории, тесты харнесса, задел под другие LLM | 🚧 |
 
+## ✅ Проверка харнесса
+
+```bash
+sh tests/lint-harness.sh   # frontmatter агентов и скиллов, модели-алиасы, ссылки superpowers:, general-purpose в spec/sdd
+bash -n install.sh
+```
+
+Срабатывание `spec` и `sdd` проверяется наборами фраз в `tests/evals/` — как запускать, написано в `tests/evals/README.md`.
+
 ## 🤝 Как добавить агента или скилл
 
 1. Агент — `claude/agents/<name>.md`, скилл — `claude/skills/<name>/SKILL.md`.
 2. `./install.sh` — появится симлинк.
-3. Коммит со скоупом `agents` или `skills`.
+3. `sh tests/lint-harness.sh`.
+4. Коммит со скоупом `agents` или `skills`.
+
+Новый стек (мобилка, десктоп, Rust) — новый агент-исполнитель и строка в таблице `## SDD` проекта; скиллы процесса не меняются.
 
 Для агента: модель по типу работы (Opus — рассуждения и ревью, Sonnet — код), `tools` без Edit/Write, если агент только читает, первый шаг — `CLAUDE.md` проекта и бриф.
 
