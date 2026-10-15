@@ -5,8 +5,9 @@ description: >
   an approved SDD spec: dialogue one question at a time, approaches, design in
   sections, then planner cuts it into partitions with owners. Trigger on
   "распиши план по #N", "сделай спеку для фичи", "давай сделаем фичу X",
-  "разложи задачу перед кодом", "plan-feature 7", or any request to design a
-  multi-partition change before coding. Use before sdd — sdd runs only from a
+  "разложи задачу перед кодом", "plan-feature 7", "хочу попробовать <технология>
+  в <существующий проект>", or any request to design a multi-partition change
+  in an existing repo before coding. Use before sdd — sdd runs only from a
   spec this skill produced. Not for a brand-new project idea (project-architect)
   and not for one-partition fixes whose issue body is already the spec
   (issue-start).
@@ -92,8 +93,14 @@ so.
 ## 8. Assemble the spec — and re-check premises yourself
 
 Fill `~/.claude/skills/sdd/references/spec.md` and write it to
-`.claude/context/specs/<feature>.md` (follow an existing `specs/` convention if
-the repo has one).
+`.claude/context/specs/<feature>.md` (or `docs/specs/<date>-<feature>.md` if the
+repo already keeps specs there — `sdd` looks in both).
+
+**Before writing, make sure git ignores `.claude/context/`.** Work repo
+(`## SDD` says `рабочий`, or the path is under `~/Job/`) → append to
+`.git/info/exclude`, never to `.gitignore`. Pet repo → append to `.gitignore`.
+Say what you added. A spec left untracked in a work repo ends up in someone's
+`git add .`.
 
 **Run every premise check yourself before writing "Что есть".** Planner's grep
 was hours ago, the spec will be executed later still; a stale premise is the
