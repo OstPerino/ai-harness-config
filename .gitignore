@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 everything-claude-code/
 _attic/
+.claude/
+.superpowers/
