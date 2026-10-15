@@ -1,6 +1,6 @@
 ---
 name: issue-start
-description: "Begin work on a GitHub issue the right way — read the issue as a spec, create a conventional branch, load project rules, and set up before writing code. Trigger when the user wants to start an issue ('начнём issue N', 'бери issue 7', 'issue-start 7', 'давай делать задачу N', 'приступай к #N'). Reads the repo's CLAUDE.md, docs/ and issue labels to adapt to the project."
+description: "Begin work on a GitHub issue the right way — read the issue as a spec, create a conventional branch, load project rules, and set up before writing code. Trigger when the user wants to start an issue ('начнём issue N', 'бери issue 7', 'issue-start 7', 'давай делать задачу N', 'приступай к #N'). Reads the repo's CLAUDE.md, docs/ and issue labels to adapt to the project. For single-partition work; multi-partition features go through spec → sdd."
 ---
 
 # issue-start
@@ -56,8 +56,9 @@ default branch.
 
 ### 5. Set expectations, then work
 
-- If the issue is large (many acceptance criteria, non-trivial decisions),
-  consider `plan-feature` first to turn it into a spec in `.claude/context/specs/`.
+- If the issue needs more than one partition (several layers, many acceptance
+  criteria, non-trivial decisions), stop here and use `spec` instead — the
+  feature then runs through `spec` → `sdd`.
 - Follow the project's testing rule. If `CODE_STYLE.md` mandates TDD for
   logic-with-edge-cases (sync, idempotency, auth, queues), **write the failing
   test before the implementation** for those parts. Vend/CRUD can be tested after.

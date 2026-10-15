@@ -49,6 +49,19 @@ Invoke `git-flow` (reference mode) for the exact convention. In short:
 Reference the issue in the commit where it makes sense (`(#N)`), but the closing
 happens via the PR.
 
+### SDD feature branch
+
+If the current branch is the feature branch of an SDD run (`Ветка фичи` in the
+project's `## SDD`, with `.claude/context/sdd/<feature>/pr.md` present):
+
+- The PR body is `pr.md`; `Closes` lists the issues of every partition.
+- `PR: я` → don't push and don't open the PR. Print the exact commands
+  (`git push -u origin <branch>`, `gh pr create --base <main> --head <branch>
+  --body-file <pr.md>`) and stop.
+- `PR: ведущий` → open it only on the owner's command; merge only on a separate
+  command, after CI is green.
+- Commits are already split per partition; skip step 3.
+
 ### 4. Open the PR
 
 - Push the branch.

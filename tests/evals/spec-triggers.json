@@ -1,0 +1,86 @@
+[
+  {
+    "query": "распиши план по #12, там синхронизация черновиков между устройствами",
+    "should_trigger": true
+  },
+  {
+    "query": "сделай спеку для фичи реакций на сообщения в чате",
+    "should_trigger": true
+  },
+  {
+    "query": "давай сделаем фичу групповых звонков, нужно продумать сервер и клиент",
+    "should_trigger": true
+  },
+  {
+    "query": "разложи задачу KEY-123 перед кодом, там редизайн карточки товара и новый эндпоинт",
+    "should_trigger": true
+  },
+  {
+    "query": "plan-feature 41",
+    "should_trigger": true
+  },
+  {
+    "query": "хочу добавить в приложение офлайн-очередь отправки, давай сначала спроектируем",
+    "should_trigger": true
+  },
+  {
+    "query": "нужна спека на миграцию авторизации с сессий на JWT с refresh-токенами",
+    "should_trigger": true
+  },
+  {
+    "query": "issue #88 большая — там и контракты, и сервер, и фронт. распланируй по партиям",
+    "should_trigger": true
+  },
+  {
+    "query": "перед тем как писать код, давай обсудим как сделать закреплённые сообщения в этом репо",
+    "should_trigger": true
+  },
+  {
+    "query": "спроектируй мне фичу экспорта отчётов в PDF для админки, потом пойдём по SDD",
+    "should_trigger": true
+  },
+  {
+    "query": "хочу попробовать Redis Streams в telegram-from-scratch для очереди пушей, давай спроектируем",
+    "should_trigger": true
+  },
+  {
+    "query": "хочу сделать новое приложение для учёта привычек",
+    "should_trigger": false
+  },
+  {
+    "query": "бери issue 7, там одна правка в валидации формы",
+    "should_trigger": false
+  },
+  {
+    "query": "поправь опечатку в README",
+    "should_trigger": false
+  },
+  {
+    "query": "следующая партия",
+    "should_trigger": false
+  },
+  {
+    "query": "у меня идея пет-проекта на Rust с WebSockets, запиши её",
+    "should_trigger": false
+  },
+  {
+    "query": "почему падает тест message-sync.test.ts",
+    "should_trigger": false
+  },
+  {
+    "query": "issue готов, делай PR",
+    "should_trigger": false
+  },
+  {
+    "query": "сделай чекпоинт перед /clear",
+    "should_trigger": false
+  },
+  {
+    "query": "объясни, как работает useAsyncData в Nuxt",
+    "should_trigger": false
+  },
+  {
+    "query": "закоммить изменения по скоупам",
+    "should_trigger": false
+  }
+]
