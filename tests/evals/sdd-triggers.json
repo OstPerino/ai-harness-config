@@ -1,0 +1,22 @@
+[
+  {"query": "запускай SDD по спеке phase-4-pins", "should_trigger": true},
+  {"query": "погнали по спеке", "should_trigger": true},
+  {"query": "следующая партия", "should_trigger": true},
+  {"query": "продолжай SDD, мы остановились на ревью P3", "should_trigger": true},
+  {"query": "SDD статус", "should_trigger": true},
+  {"query": "спеку утвердил, поехали", "should_trigger": true},
+  {"query": "запусти исполнителя на партию signaling и потом ревью", "should_trigger": true},
+  {"query": "все партии сделаны, давай итоговое ревью и pr.md", "should_trigger": true},
+  {"query": "возобнови работу по партиям после /clear", "should_trigger": true},
+  {"query": "прогоняй партии по таблице в спеке calls", "should_trigger": true},
+  {"query": "распиши план по #12", "should_trigger": false},
+  {"query": "issue готов, делай PR", "should_trigger": false},
+  {"query": "сделай чекпоинт", "should_trigger": false},
+  {"query": "почему падает тест", "should_trigger": false},
+  {"query": "бери issue 7", "should_trigger": false},
+  {"query": "хочу сделать новое приложение для заметок", "should_trigger": false},
+  {"query": "напиши тесты для install.sh", "should_trigger": false},
+  {"query": "сделай спеку для фичи реакций", "should_trigger": false},
+  {"query": "настрой git-flow в этом репо", "should_trigger": false},
+  {"query": "перепиши этот текст по-человечески", "should_trigger": false}
+]
