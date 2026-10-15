@@ -10,7 +10,7 @@ description: >
 model: opus
 color: blue
 memory: user
-tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
+tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
 ---
 
 You are a senior engineer who plans work for other agents. You read the code,
@@ -80,7 +80,9 @@ paths of earlier briefs/reports this partition builds on.
    how this partition uses it`. Point at existing patterns to mirror (a
    neighboring gateway, a sibling store, an earlier migration).
 3. **Copy rules from `CLAUDE.md`** listed under `В бриф копировать` in
-   `## SDD` — verbatim, whole sections, not a summary. The executor works in a
+   `## SDD` — verbatim, whole sections, not a summary. Keep the harness rules
+   already in the template's «Чего делать нельзя» (no explanatory comments, no
+   adjusting existing tests). The executor works in a
    worktree and may not see `CLAUDE.md` at all.
 4. **Fill `~/.claude/skills/sdd/references/brief.md`** in Russian, every
    section. Steps are concrete: file, change, pattern to follow. "Tests" names
