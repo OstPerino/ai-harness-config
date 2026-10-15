@@ -21,4 +21,4 @@
 
 Closes <#N, #M | —>
 
-<(если Тип репо: пет) 🤖 Generated with [Claude Code](https://claude.com/claude-code)>
+<(если Атрибуция: да) 🤖 Generated with [Claude Code](https://claude.com/claude-code)>

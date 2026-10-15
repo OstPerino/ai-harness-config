@@ -25,21 +25,37 @@ Templates: `~/.claude/skills/sdd/references/` — `claude-md-sdd.md`, `spec.md`,
 
 1. Read `## SDD` from `CLAUDE.md`, or from `CLAUDE.local.md` if the section is
    there. No section → **First run** (§2), then come back.
-2. Find the spec: the path the owner gave, or the only spec in
-   `.claude/context/specs/` with partitions not all `done`. Several candidates →
-   ask which.
+2. Find the spec: the path the owner gave; otherwise every `*.md` under
+   `.claude/context/specs/` and `docs/specs/` that has a «Партии» section.
+   Candidates = specs with any row not `done` (including the `final`, `fixes`
+   and `pr` rows). One → take it. Several → ask which. None → ask the owner for
+   the path; never guess.
 3. Validate the spec: it has the partitions table, and every status is one of
-   `todo | brief | work | review | fix | done` (a `work`/`fix` cell may carry
-   `(agent <id>)`). Missing table or unknown status → stop: «спека не готова
-   для sdd — нужен скилл spec».
-4. Resume from the first partition that isn't `done`, at its status. Report one
-   line: `<feature>: P1 done, P2 review, P3 todo — продолжаю с P2 (review)`.
+   `todo | brief | work | review | fix | done`, optionally followed by
+   `(agent <id>[, gate red <n>])`. A spec without the table, or with an unknown
+   status, is rejected with «спека не готова для sdd — нужен скилл spec» — also
+   when the owner named it explicitly.
+4. Resume from the first row that isn't `done`, at its status (table below).
+   Report one line: `<feature>: P1 done, P2 review, P3 todo — продолжаю с P2
+   (review)`.
 
-**Lost executor.** A partition in `work` or `fix` whose agent id isn't
-reachable from this session (after `/clear` or a new session): dispatch a new
-agent of the same type with the brief, the report and the review (whichever
-exist) as input, in the same worktree. Tell the owner the previous executor's
-context is lost and the fix round, if any, starts from the files.
+**Resuming a status.** Every step is re-entrant: check what already exists on
+disk before doing it again.
+
+| status | already exists | do |
+|---|---|---|
+| `brief` | worktree (`git worktree list`) | reuse it; don't run `git worktree add` again |
+| `brief` | `<id>-brief.md` | skip the planner, go to the approval / executor step |
+| `work` | `<id>-report.md` and commits since the partition base | don't dispatch; go to the gate (§5.3) |
+| `work` | commits but no report | ask the owner whether the executor still runs in another session; if not, lost executor (below) |
+| `review` | `<id>-review.md` | don't dispatch a reviewer; go to the fix round |
+| `fix` | «Фикс-раунд» section in the report | the fix round is over; go to the gate after fix (§5.5) |
+
+**Lost executor.** A partition in `work`/`fix` with no report for the current
+step and an agent id that isn't reachable from this session: dispatch a new
+agent of the same type, in the same worktree, with the brief, the report and
+the review (whichever exist) as input. Write the new id into the cell. Tell the
+owner the previous executor's context is lost.
 
 ## 2. First run in a repo
 
@@ -47,13 +63,19 @@ context is lost and the fix round, if any, starts from the files.
    the path (`~/Job/*` → рабочий, otherwise пет).
 2. Detect the layers from the repo layout (apps/packages/crates/services) and
    propose executor/reviewer per layer from the harness agents.
-3. Find the gate: `package.json` scripts, CI workflow, `Makefile`, `justfile`.
-   Nothing obvious → propose one from the manifests and ask:
-   - Rust: `cargo fmt --check && cargo clippy -- -D warnings && cargo test`
-   - Python: `ruff check && pytest`
-   - Node without scripts: `npx tsc --noEmit && npx vitest run`
-   Never leave the gate empty.
-4. Fill `claude-md-sdd.md` with the defaults for the type and show it as one
+3. Find the gate: `package.json` scripts, CI workflow, `Makefile`, `justfile`,
+   a `tests/` runner script. Propose only commands whose tools are actually
+   installed (`command -v`, devDependencies, lockfile) and that pass on the
+   current base — run the proposal once before writing it down. Rust usually
+   fits `cargo fmt --check && cargo clippy -- -D warnings && cargo test`. If
+   nothing runnable exists (a shell/markdown repo, a Node repo without tests),
+   say so and ask the owner for the gate. Never write a gate you haven't seen
+   pass, and never leave it empty.
+4. Find the worktree setup: what a fresh worktree needs before the gate runs —
+   dependency install from the lockfile (`pnpm install --frozen-lockfile`,
+   `npm ci`, `uv sync`), untracked config the gate reads (`.env`, generated
+   clients). Write it as `Подготовка worktree`; `нет` if nothing is needed.
+5. Fill `claude-md-sdd.md` with the defaults for the type and show it as one
    table for confirmation:
 
    | | пет | рабочий |
@@ -63,32 +85,35 @@ context is lost and the fix round, if any, starts from the files.
    | Скрыть артефакты | `.gitignore` | `.git/info/exclude` |
    | Ветка фичи | `sdd/<фича>` | спросить шаблон (`feature/<KEY>-<slug>`) |
 
-5. Write the section:
+6. Write the section:
    - пет → `CLAUDE.md`;
    - рабочий, `CLAUDE.md` not tracked (`git ls-files --error-unmatch CLAUDE.md`
      fails) → `CLAUDE.md`;
    - рабочий, `CLAUDE.md` tracked → `CLAUDE.local.md`; don't touch `CLAUDE.md`.
 
-## 3. Work-repo guard
+## 3. Hide SDD artifacts
 
-For `Тип репо: рабочий`, before the first partition make sure
-`.git/info/exclude` contains each of these lines; append the missing ones and
+Artifacts: `.claude/context/`, `.claude/worktrees/`, `CLAUDE.local.md`, and
+`CLAUDE.md` when it isn't tracked. Before the first partition, check that git
+ignores each of them (`git check-ignore -q <path>`); add the missing ones and
 say which:
 
+- **рабочий** → append to `.git/info/exclude`, one bare pattern per line (`#` in
+  the middle of a line is not a comment there). Never edit the project's
+  `.gitignore` — the team sees it.
+- **пет** → append to `.gitignore` and commit it with the first partition merge.
+
+**Merge guard.** Before every merge into the feature branch, look at what the
+partition brings, not at the main tree:
+
+```bash
+git diff --name-only <feature-branch>...<feature-branch>-<id> \
+  | grep -E '^\.claude/(context|worktrees)/|^CLAUDE\.local\.md$'
 ```
-.claude/context/
-.claude/worktrees/
-CLAUDE.local.md
-```
 
-Add `CLAUDE.md` as a fourth line only if it is not tracked. Write bare
-patterns: `#` in the middle of a line is not a comment in exclude files.
-
-Never edit the project's `.gitignore` in a work repo — the team sees it.
-
-Before every merge into the feature branch:
-`git status --porcelain | grep -E '\.claude/|CLAUDE\.local\.md'` — any output
-→ stop.
+Add `|^CLAUDE\.md$` to the pattern when `CLAUDE.md` is not tracked. Any output
+→ stop: an SDD artifact is about to land in the branch. Other files under
+`.claude/` (team `settings.json`, `commands/`) are ordinary project files.
 
 ## 4. Feature branch
 
@@ -103,11 +128,17 @@ time unless `Параллельные партии: да` (§7).
 
 ### 5.1 Brief — `brief`
 
-Create the worktree from the current head of the feature branch:
+Create the worktree from the current head of the feature branch (unless it
+already exists — §1), then prepare it:
 
 ```bash
 git worktree add <Worktree>/<feature>-<id> -b <feature-branch>-<id> <feature-branch>
+cd <Worktree>/<feature>-<id> && <Подготовка worktree>
 ```
+
+Run the gate once in the fresh worktree before the planner: it must be green on
+the base, and it gives the planner the baseline numbers. Red on the base →
+stop; the partition would inherit someone else's failure.
 
 Dispatch the planner:
 
@@ -136,6 +167,8 @@ baseline present, `CLAUDE.md` rules copied in full.
 Agent(subagent_type: "<executor from ## SDD>", prompt: """
 Your only input is the brief: <abs path to brief>.
 Work only in <worktree path>. Write the report to <report path>.
+No explanatory comments in code: no "why" paragraphs above functions, in tests
+or configs. Test names say why a test exists; reasons go to the report.
 """)
 ```
 
@@ -147,11 +180,15 @@ and tell the owner.
 
 ### 5.3 Gate
 
-Run `Гейт` from `## SDD` inside the worktree, output to a file. Green → read
-the summary lines. Red → read the whole failing output, never `head`/`tail` it.
+Run `Гейт` from `## SDD` inside the worktree; write the output to
+`.claude/context/sdd/<feature>/<id>-gate.log` in the **main** working tree, not
+inside the worktree (an untracked file there blocks `git worktree remove`).
+Green → read the summary lines. Red → read the whole failing output, never
+`head`/`tail` it.
 
-- Red → `SendMessage` to the same executor with the failing output path. Not a
-  fix round: there was no review yet.
+- Red → `SendMessage` to the same executor with the log path, and record it in
+  the cell: `work (agent <id>, gate red 1)`. Not a fix round: there was no
+  review yet.
 - Red twice in a row → stop; tell the owner what fails and why you think so.
   Use `systematic-debugging` if the cause isn't obvious.
 
@@ -177,7 +214,8 @@ Write the review to <path>/<id>-review.md using
   Critical and Important", "append a «Фикс-раунд» section to the report".
 
 Then run the gate and read the diff of the fixes yourself. **No second
-review.** Minor findings go into the spec's open questions or the final
+review.** Red after the fix round → the same executor gets the log (gate
+retries are not fix rounds); red twice in a row → stop, as in §5.3. Minor findings go into the spec's open questions or the final
 `pr.md`, not into code.
 
 ### 5.6 Merge — `done`
@@ -202,14 +240,18 @@ Mark `done`, release the executor, take the next partition.
 
 ## 6. Finishing the feature
 
-1. **Final review**, one per layer touched, over
+The finishing steps are rows of the partitions table — `final`, `fixes`, `pr` —
+so they resume like partitions.
+
+1. **Final review** (`final` row), one per layer touched, over
    `<Основная ветка>...<feature-branch>`, written to
    `final-review-<layer>.md` from `final-review.md`. Add `security-reviewer`
    only if the spec's «Безопасность» says `да` or the owner asks.
-2. **Partition `fixes`** for Critical/Important from the final reviews: brief →
+2. **Partition `fixes`** (`fixes` row; `done` right away if there is nothing
+   to fix) for Critical/Important from the final reviews: brief →
    executor → gate → merge. No review for `fixes`.
-3. **`pr.md`** in `.claude/context/sdd/<feature>/` from `pr.md`; attribution
-   line only for `Тип репо: пет`.
+3. **`pr.md`** (`pr` row) in `.claude/context/sdd/<feature>/` from `pr.md`;
+   the attribution line only when `Атрибуция: да`.
 4. **PR** — only on the owner's command:
    - `PR: ведущий` → `issue-done` opens it (push, `gh pr create --base
      <Основная ветка> --head <feature-branch> --body-file <pr.md>`); merge only
@@ -228,6 +270,7 @@ each merge.
 
 Stop and write to the owner — don't push through — when:
 
+- the gate is red on the base, before the executor started;
 - a premise in a brief doesn't hold;
 - the executor returns «правок ноль» or «заблокирован»;
 - the gate is red twice in a row;

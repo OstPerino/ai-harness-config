@@ -8,11 +8,13 @@
 
 - Тип репо: <пет | рабочий>
 - Гейт: `<команда целиком, напр. pnpm lint && pnpm typecheck && pnpm test && pnpm build>`
+- Подготовка worktree: <`команда`, напр. `pnpm install --frozen-lockfile && cp ../../../.env .` | нет>
 - Основная ветка: <main | master | …>
 - Ветка фичи: <sdd/<фича> | шаблон, напр. feature/<KEY>-<slug>>
 - Трекер: <github | jira <KEY> | нет>
 - Issue на партию: <да | нет>
 - PR: <ведущий | я>
+- Атрибуция: <да | нет>
 - E2E: <`команда`, напр. `pnpm test:e2e` | нет>
 - Worktree: <.claude/worktrees/>
 - Параллельные партии: <нет | да>
