@@ -63,6 +63,21 @@ time-dependent UI, unawaited action, order-dependent state. If you cannot fix it
 in scope, quarantine with `test.fixme(true, '<reason, issue link>')` and report
 it — never delete the test silently.
 
+## Stop rule
+
+At most 3 attempts per scenario, counting every run you change something for
+(spec rewrite, locator fix, flake fix). After the third failed attempt stop
+working on that scenario: don't add waits, don't retry, don't quarantine to make
+the suite green. Write a manual check for the owner instead:
+
+- steps, starting from the URL and the account/role to use;
+- the expected result of each step;
+- where to look when it fails (console, network request, server log);
+- what you tried, with the trace path of the last attempt.
+
+Then move on to the next scenario. If the project's `## SDD` says `E2E: нет`,
+you should not have been dispatched — say so and stop.
+
 ## Hard rules
 
 - Do not change application code to make a test pass; report the bug with the
@@ -82,3 +97,4 @@ message:
   suspected cause, suggested fix.
 - Quarantined tests with reasons.
 - Requests to other agents (missing test ids, app bugs).
+- Scenarios stopped by the stop rule, with the manual check for each.
