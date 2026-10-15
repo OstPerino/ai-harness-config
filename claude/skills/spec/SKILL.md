@@ -5,9 +5,8 @@ description: >
   an approved SDD spec: dialogue one question at a time, approaches, design in
   sections, then planner cuts it into partitions with owners. Trigger on
   "распиши план по #N", "сделай спеку для фичи", "давай сделаем фичу X",
-  "разложи задачу перед кодом", "plan-feature 7", "хочу попробовать <технология>
-  в <существующий проект>", or any request to design a multi-partition change
-  in an existing repo before coding. Use before sdd — sdd runs only from a
+  "разложи задачу перед кодом", "plan-feature 7", or any request to design a
+  multi-partition change before coding. Use before sdd — sdd runs only from a
   spec this skill produced. Not for a brand-new project idea (project-architect)
   and not for one-partition fixes whose issue body is already the spec
   (issue-start).
