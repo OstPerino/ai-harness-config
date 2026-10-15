@@ -15,7 +15,16 @@ frontmatter() {
 }
 
 field() {
-  frontmatter "$1" | sed -n "s/^$2:[[:space:]]*//p" | head -n 1
+  frontmatter "$1" | awk -v key="$2" '
+    found && /^[[:space:]]+[^[:space:]]/ { sub(/^[[:space:]]+/, ""); printf "%s ", $0; next }
+    found { exit }
+    index($0, key ":") == 1 {
+      value = substr($0, length(key) + 2)
+      sub(/^[[:space:]]+/, "", value)
+      if (value ~ /^[>|][-+]?$/) { found = 1; next }
+      print value
+      exit
+    }'
 }
 
 for skill in "$CLAUDE"/skills/*/; do
@@ -37,8 +46,8 @@ for agent in "$CLAUDE"/agents/*.md; do
   [ -n "$(field "$agent" description)" ] || err "agents/$base.md" "missing description"
   model=$(field "$agent" model)
   case "$model" in
-    "" | opus | sonnet | haiku | inherit) ;;
-    *) err "agents/$base.md" "model '$model' is not an alias (opus|sonnet|haiku|inherit)" ;;
+    "" | opus | sonnet | haiku | fable | inherit) ;;
+    *) err "agents/$base.md" "model '$model' is not an alias (opus|sonnet|haiku|fable|inherit); harness policy pins aliases so agents follow new model versions" ;;
   esac
 done
 
