@@ -7,7 +7,7 @@ description: >
   files (.docker/, compose, nginx templates, CI workflows, VPS runbooks).
   Writes infra only — application code, Prisma schema and contracts belong
   to node-dev. Never generates secrets, never deploys.
-model: claude-sonnet-5
+model: sonnet
 color: cyan
 memory: user
 ---
