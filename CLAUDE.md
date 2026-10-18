@@ -22,7 +22,7 @@
 | tests/ | test-dev | backend-reviewer |
 
 - Тип репо: пет
-- Гейт: `sh tests/lint-harness.sh && bash -n install.sh`
+- Гейт: `sh tests/lint-harness.sh && bash -n install.sh && sh tests/install.test.sh`
 - Подготовка worktree: нет
 - Основная ветка: main
 - Ветка фичи: sdd/<фича>
