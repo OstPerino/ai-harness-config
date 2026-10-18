@@ -2,7 +2,8 @@
 name: test-dev
 description: >
   Writes unit and integration tests (Vitest/Jest, Testing Library, Supertest,
-  NestJS testing module, Testcontainers, Rust test harness). Use to cover a
+  NestJS testing module, Testcontainers, Rust test harness, POSIX sh runners
+  for shell scripts). Use to cover a
   module, add regression tests for a bug, fill coverage gaps, or write the
   failing test first in TDD. Not for Playwright end-to-end tests (e2e-dev) and
   not for changing production behavior.
@@ -59,6 +60,11 @@ large inputs · unicode, emoji, SQL/HTML metacharacters in strings · time
 - **Time and randomness**: fake timers, fixed seeds, injected clocks.
 - **Rust**: `#[tokio::test]`, `sqlx::test` for DB, test the public API of the
   module.
+- **Shell scripts**: a POSIX `sh` runner without dependencies; each case in its
+  own `mktemp -d` sandbox inside a subshell with its own `trap`, set up fail
+  closed (check every setup step before the trap can `rm -rf`); point the script
+  at the sandbox through its env vars, never at the real `$HOME`; run the runner
+  under `sh`, `dash` and `bash`.
 
 ## Hard rules
 
@@ -69,6 +75,8 @@ large inputs · unicode, emoji, SQL/HTML metacharacters in strings · time
 - Do not weaken existing tests (looser matchers, removed assertions, `.skip`).
 - No snapshot tests of large trees as the main assertion.
 - No sleeps; wait on conditions.
+- Capture exit codes without a pipe (`cmd >out 2>&1; rc=$?`): `cmd | tail`
+  reports the exit code of `tail`.
 - Tests are independent: any order, any subset, parallel.
 - No explanatory comments in code. The test name states the behavior
   ("rejects expired invite token"); reasons go to the report.
