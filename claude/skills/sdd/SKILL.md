@@ -166,9 +166,12 @@ Planner returned discrepancies instead of a brief → stop and show them to the
 owner. Otherwise read the brief yourself: every step concrete, the gate and
 baseline present, `CLAUDE.md` rules copied in full.
 
-- **First brief of the feature** → show it to the owner in full and wait for
-  approval.
-- Later briefs → one line to the owner (`P3 бриф: <what it does>`), continue.
+Who approves follows `Утверждение брифов` in `## SDD` (default: the owner
+approves the first brief of the feature, the lead the rest). The owner can also
+grant it for the current session in chat. A brief approved by the lead → one
+line to the owner (`P3 бриф: <what it does>`), continue. The lead may amend a
+brief before dispatch; record the amendment in the brief and, if it changes
+acceptance, in the spec.
 
 ### 5.2 Executor — `work (agent <id>)`
 
@@ -181,8 +184,9 @@ or configs. Test names say why a test exists; reasons go to the report.
 """)
 ```
 
-Record the agent id in the status cell. The executor is **not released** until
-its fix round is over.
+Record the agent id in the status cell and keep it there through `review` and
+`fix`: after `/clear` it tells who gets the fix round. The executor is **not
+released** until its fix round is over.
 
 Executor returned «правок ноль», «заблокирован» or a premise mismatch → stop
 and tell the owner.
@@ -244,6 +248,10 @@ Gate red after the merge → the partition is not done; fix on the feature branc
 **Conflicts:** resolve them yourself. Ask the owner only when the resolution
 changes the behavior one of the partitions delivered (both partitions changed
 the same function differently and you'd have to pick a behavior).
+
+If the partition changed what the gate should run (a new test runner, a new
+check), update `Гейт` in `## SDD` yourself in the same step — executors don't
+touch `CLAUDE.md`.
 
 Mark `done`, release the executor, take the next partition.
 
