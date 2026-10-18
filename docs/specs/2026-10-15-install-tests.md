@@ -1,6 +1,6 @@
 # Тесты для install.sh — спека
 
-**Issue:** нет · **Дата:** 2026-10-15 · **Статус:** черновик
+**Issue:** нет · **Дата:** 2026-10-15 · **Статус:** утверждена
 
 ## Зачем
 
@@ -47,11 +47,11 @@
 
 | id | имя | исполнитель | ревьюер | зависит от | issue | статус |
 |---|---|---|---|---|---|---|
-| P1 | install-test-runner | test-dev | backend-reviewer | — | — | todo |
-| P2 | install-test-backup-prune | test-dev | backend-reviewer | P1 | — | todo |
-| final | итоговое ревью | — | backend-reviewer | P1, P2 | — | todo |
-| fixes | правки по итоговому ревью | test-dev | — | final | — | todo |
-| pr | pr.md и мерж | ведущий | — | fixes | — | todo |
+| P1 | install-test-runner | test-dev | backend-reviewer | — | — | done |
+| P2 | install-test-backup-prune | test-dev | backend-reviewer | P1 | — | done |
+| final | итоговое ревью | — | backend-reviewer | P1, P2 | — | done |
+| fixes | правки по итоговому ревью | test-dev | — | final | — | done |
+| pr | pr.md и мерж | ведущий | — | fixes | — | review |
 
 **P1 `install-test-runner`** — `tests/install.test.sh`: песочница, хелперы (`assert_link`, `assert_not_exists`, `assert_output_contains`, `assert_tree_unchanged`), вывод `ok <имя>` / `FAIL <имя>: <ожидали / получили>`, итог `N/M passed`, exit 1 при FAIL, `INSTALL_SH`. Сценарии:
 
@@ -78,7 +78,7 @@
 
 - [ ] `sh tests/install.test.sh` → `7/7 passed`, exit 0 — команда.
 - [ ] Тот же раннер под `dash tests/install.test.sh` → `7/7 passed` — команда.
-- [ ] Каждая из 7 мутаций роняет свой сценарий, и только его — таблица мутаций в отчётах партий.
+- [ ] Каждая из 7 мутаций роняет свой сценарий, и только его — таблица мутаций в отчётах партий. Исключение: мутант `49d` (`link`) роняет и `backup` — backup обязан проверять ссылку на месте файла (решение ведущего 2026-10-18).
 - [ ] Во время прогона ни один файл в настоящем `~/.claude` не изменился — `find ~/.claude/agents ~/.claude/skills -maxdepth 1 -newer <метка>` пусто.
 - [ ] Гейт харнесса `sh tests/lint-harness.sh && bash -n install.sh && sh tests/install.test.sh` указан в README.
 

@@ -26,7 +26,7 @@ Templates: `~/.claude/skills/sdd/references/` — `claude-md-sdd.md`, `spec.md`,
 1. Read `## SDD` from `CLAUDE.md`, or from `CLAUDE.local.md` if the section is
    there. No section → **First run** (§2), then come back.
 2. Find the spec: the path the owner gave; otherwise every `*.md` under
-   `.claude/context/specs/` and `docs/specs/` that has a «Партии» section.
+   `.sdd/specs/` and `docs/specs/` that has a «Партии» section.
    Candidates = specs with any row not `done` (including the `final`, `fixes`
    and `pr` rows). One → take it. Several → ask which. None → ask the owner for
    the path; never guess.
@@ -91,29 +91,38 @@ owner the previous executor's context is lost.
      fails) → `CLAUDE.md`;
    - рабочий, `CLAUDE.md` tracked → `CLAUDE.local.md`; don't touch `CLAUDE.md`.
 
-## 3. Hide SDD artifacts
+## 3. Where SDD files live, and hiding them
 
-Artifacts: `.claude/context/`, `.claude/worktrees/`, `CLAUDE.local.md`, and
-`CLAUDE.md` when it isn't tracked. Before the first partition, check that git
-ignores each of them (`git check-ignore -q <path>`); add the missing ones and
-say which:
+- Worktrees: `.worktrees/<feature>-<id>` (key `Worktree`). Specs: `.sdd/specs/`
+  or the repo's `docs/specs/`. Partition files: `.sdd/<feature>/`.
+- Nothing goes under `.claude/`: Claude Code asks for permission on every write
+  to a project's `.claude/` directory, even in bypass mode, and an executor
+  writing code in a worktree there triggers a prompt per file.
+
+Before the first partition, check that git ignores `.worktrees/` always, and
+`.sdd/`, `CLAUDE.local.md` (and `CLAUDE.md` when it isn't tracked) unless
+`Артефакты SDD: коммитить` (`git check-ignore -q <path>`); add the missing
+ones and say which:
 
 - **рабочий** → append to `.git/info/exclude`, one bare pattern per line (`#` in
   the middle of a line is not a comment there). Never edit the project's
   `.gitignore` — the team sees it.
 - **пет** → append to `.gitignore` and commit it with the first partition merge.
 
+With `Артефакты SDD: коммитить` the lead commits the spec status and the
+partition files on the feature branch after each merge.
+
 **Merge guard.** Before every merge into the feature branch, look at what the
 partition brings, not at the main tree:
 
 ```bash
 git diff --name-only <feature-branch>...<feature-branch>-<id> \
-  | grep -E '^\.claude/(context|worktrees)/|^CLAUDE\.local\.md$'
+  | grep -E '^\.worktrees/|^\.sdd/|^CLAUDE\.local\.md$'
 ```
 
-Add `|^CLAUDE\.md$` to the pattern when `CLAUDE.md` is not tracked. Any output
-→ stop: an SDD artifact is about to land in the branch. Other files under
-`.claude/` (team `settings.json`, `commands/`) are ordinary project files.
+Add `|^CLAUDE\.md$` when `CLAUDE.md` is not tracked. Any output → stop: an
+SDD artifact or a worktree is about to land in the branch from the executor.
+Partition files are committed by the lead, never by executors.
 
 ## 4. Feature branch
 
@@ -147,8 +156,8 @@ Agent(subagent_type: "planner", prompt: """
 Mode: brief
 Spec: <abs path>. Partition: <id> <name>.
 Worktree: <abs path>, branch <branch> from <feature-branch> @ <sha>.
-Report path: <abs path>/.claude/context/sdd/<feature>/<id>-report.md
-Brief path: <abs path>/.claude/context/sdd/<feature>/<id>-brief.md
+Report path: <abs path>/.sdd/<feature>/<id>-report.md
+Brief path: <abs path>/.sdd/<feature>/<id>-brief.md
 Builds on: <earlier briefs/reports>. Stack: <summary>.
 """)
 ```
@@ -157,9 +166,12 @@ Planner returned discrepancies instead of a brief → stop and show them to the
 owner. Otherwise read the brief yourself: every step concrete, the gate and
 baseline present, `CLAUDE.md` rules copied in full.
 
-- **First brief of the feature** → show it to the owner in full and wait for
-  approval.
-- Later briefs → one line to the owner (`P3 бриф: <what it does>`), continue.
+Who approves follows `Утверждение брифов` in `## SDD` (default: the owner
+approves the first brief of the feature, the lead the rest). The owner can also
+grant it for the current session in chat. A brief approved by the lead → one
+line to the owner (`P3 бриф: <what it does>`), continue. The lead may amend a
+brief before dispatch; record the amendment in the brief and, if it changes
+acceptance, in the spec.
 
 ### 5.2 Executor — `work (agent <id>)`
 
@@ -172,8 +184,9 @@ or configs. Test names say why a test exists; reasons go to the report.
 """)
 ```
 
-Record the agent id in the status cell. The executor is **not released** until
-its fix round is over.
+Record the agent id in the status cell and keep it there through `review` and
+`fix`: after `/clear` it tells who gets the fix round. The executor is **not
+released** until its fix round is over.
 
 Executor returned «правок ноль», «заблокирован» or a premise mismatch → stop
 and tell the owner.
@@ -181,7 +194,7 @@ and tell the owner.
 ### 5.3 Gate
 
 Run `Гейт` from `## SDD` inside the worktree; write the output to
-`.claude/context/sdd/<feature>/<id>-gate.log` in the **main** working tree, not
+`.sdd/<feature>/<id>-gate.log` in the **main** working tree, not
 inside the worktree (an untracked file there blocks `git worktree remove`).
 Green → read the summary lines. Red → read the whole failing output, never
 `head`/`tail` it.
@@ -236,6 +249,10 @@ Gate red after the merge → the partition is not done; fix on the feature branc
 changes the behavior one of the partitions delivered (both partitions changed
 the same function differently and you'd have to pick a behavior).
 
+If the partition changed what the gate should run (a new test runner, a new
+check), update `Гейт` in `## SDD` yourself in the same step — executors don't
+touch `CLAUDE.md`.
+
 Mark `done`, release the executor, take the next partition.
 
 ## 6. Finishing the feature
@@ -250,7 +267,7 @@ so they resume like partitions.
 2. **Partition `fixes`** (`fixes` row; `done` right away if there is nothing
    to fix) for Critical/Important from the final reviews: brief →
    executor → gate → merge. No review for `fixes`.
-3. **`pr.md`** (`pr` row) in `.claude/context/sdd/<feature>/` from `pr.md`;
+3. **`pr.md`** (`pr` row) in `.sdd/<feature>/` from `pr.md`;
    the attribution line only when `Атрибуция: да`.
 4. **PR** — only on the owner's command:
    - `PR: ведущий` → `issue-done` opens it (push, `gh pr create --base

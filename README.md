@@ -68,7 +68,7 @@ flowchart LR
 ```
 
 - **`spec`** пишет спеку вместе с тобой: вопросы по одному, дизайн по секциям, разбиение на партии от `planner`.
-- **`sdd`** ведёт партии по таблице в спеке. Состояние живёт в файлах (`.claude/context/sdd/<фича>/`), поэтому после `/clear` работа продолжается с той же партии.
+- **`sdd`** ведёт партии по таблице в спеке. Состояние живёт в файлах (`.sdd/<фича>/`, worktree партий — в `.worktrees/`; всё вне `.claude/`, куда Claude Code пишет только с подтверждением), поэтому после `/clear` работа продолжается с той же партии.
 - **Ревью одно, фикс один, повторного ревью нет.** Исполнителя не отпускают, пока не закончен его фикс-раунд.
 - **Мелкие задачи** на одну партию идут без SDD: `issue-start` → код → `issue-done`.
 
@@ -181,7 +181,7 @@ ai-harness-config/
 │   └── skills/             14 скиллов (sdd/references — шаблоны артефактов, git-flow/templates — хук)
 ├── docs/                   спеки и планы работ над харнессом
 ├── issues/                 открытые задачи по харнессу
-├── tests/                  lint-harness.sh, evals срабатывания скиллов
+├── tests/                  lint-harness.sh, install.test.sh, evals срабатывания скиллов
 ├── .githooks/commit-msg    проверка формата коммита + эмодзи
 ├── .gitflow                скоупы коммитов
 └── install.sh              симлинки в ~/.claude
@@ -204,7 +204,10 @@ ai-harness-config/
 ```bash
 sh tests/lint-harness.sh   # frontmatter агентов и скиллов, модели-алиасы, ссылки superpowers:, general-purpose в spec/sdd
 bash -n install.sh
+sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент, бэкап, prune своих и чужих висячих ссылок
 ```
+
+Чтобы проверить тест мутантом: `m=$(mktemp); sed '<правка>' install.sh > "$m" && INSTALL_SH="$m" sh tests/install.test.sh`.
 
 Срабатывание `spec` и `sdd` проверяется наборами фраз в `tests/evals/` — как запускать, написано в `tests/evals/README.md`.
 
