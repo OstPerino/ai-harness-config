@@ -47,7 +47,7 @@
 
 | id | имя | исполнитель | ревьюер | зависит от | issue | статус |
 |---|---|---|---|---|---|---|
-| P1 | install-test-runner | test-dev | backend-reviewer | — | — | todo |
+| P1 | install-test-runner | test-dev | backend-reviewer | — | — | done |
 | P2 | install-test-backup-prune | test-dev | backend-reviewer | P1 | — | todo |
 | final | итоговое ревью | — | backend-reviewer | P1, P2 | — | todo |
 | fixes | правки по итоговому ревью | test-dev | — | final | — | todo |
