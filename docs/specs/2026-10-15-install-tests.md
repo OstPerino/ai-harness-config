@@ -1,6 +1,6 @@
 # Тесты для install.sh — спека
 
-**Issue:** нет · **Дата:** 2026-10-15 · **Статус:** черновик
+**Issue:** нет · **Дата:** 2026-10-15 · **Статус:** утверждена
 
 ## Зачем
 
@@ -49,9 +49,9 @@
 |---|---|---|---|---|---|---|
 | P1 | install-test-runner | test-dev | backend-reviewer | — | — | done |
 | P2 | install-test-backup-prune | test-dev | backend-reviewer | P1 | — | done |
-| final | итоговое ревью | — | backend-reviewer | P1, P2 | — | todo |
-| fixes | правки по итоговому ревью | test-dev | — | final | — | todo |
-| pr | pr.md и мерж | ведущий | — | fixes | — | todo |
+| final | итоговое ревью | — | backend-reviewer | P1, P2 | — | done |
+| fixes | правки по итоговому ревью | test-dev | — | final | — | done |
+| pr | pr.md и мерж | ведущий | — | fixes | — | review |
 
 **P1 `install-test-runner`** — `tests/install.test.sh`: песочница, хелперы (`assert_link`, `assert_not_exists`, `assert_output_contains`, `assert_tree_unchanged`), вывод `ok <имя>` / `FAIL <имя>: <ожидали / получили>`, итог `N/M passed`, exit 1 при FAIL, `INSTALL_SH`. Сценарии:
 
