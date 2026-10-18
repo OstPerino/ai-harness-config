@@ -191,13 +191,17 @@ ai-harness-config/
 
 | # | Задача | Статус |
 |---|---|---|
-| [001](issues/001-own-superpowers.md) | Свой SDD вместо superpowers: каждая роль процесса вызывает нашего агента | 🧪 реализовано, ждёт прогонов |
+| [001](issues/001-own-superpowers.md) | Свой SDD вместо superpowers: каждая роль процесса вызывает нашего агента | ✅ сухой прогон пройден, ждёт боевого |
 | [002](issues/002-context7-auth.md) | context7 по API-ключу вместо OAuth | 🔓 |
 | [003](issues/003-lsp-flaky.md) | LSP: починить или заменить хуком typecheck | 🔓 |
 | [004](issues/004-github-mcp-global.md) | GitHub MCP на уровне пользователя вместо `gh` | 🔓 |
 | [005](issues/005-agent-audit.md) | Перевести `frontend-dev`, `node-dev`, `devops-dev` и ревьюеров в формат новых агентов | 🔓 |
 | [006](issues/006-telegram.md) | Довести связку Telegram до рабочего состояния или удалить | ⏸️ |
 | [007](issues/007-harness-repo.md) | Хуки и `settings.json` в репозитории, тесты харнесса, задел под другие LLM | 🚧 |
+| [008](issues/008-prompt-injection.md) | Защита от prompt injection: `deny`-правила, хуки, минимальные права | 🔓 приоритет |
+| [009](issues/009-bypass-prompts.md) | Запросы разрешений от сабагентов в bypass | ⏸️ |
+| [010](issues/010-learn-skill.md) | `/learn`: неочевидное из работы — в харнесс | 🔓 |
+| [011](issues/011-statusline-context.md) | Остаток контекста в строке состояния | 🔓 |
 
 ## ✅ Проверка харнесса
 
