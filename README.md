@@ -181,7 +181,7 @@ ai-harness-config/
 │   └── skills/             14 скиллов (sdd/references — шаблоны артефактов, git-flow/templates — хук)
 ├── docs/                   спеки и планы работ над харнессом
 ├── issues/                 открытые задачи по харнессу
-├── tests/                  lint-harness.sh, evals срабатывания скиллов
+├── tests/                  lint-harness.sh, install.test.sh, evals срабатывания скиллов
 ├── .githooks/commit-msg    проверка формата коммита + эмодзи
 ├── .gitflow                скоупы коммитов
 └── install.sh              симлинки в ~/.claude
@@ -204,7 +204,10 @@ ai-harness-config/
 ```bash
 sh tests/lint-harness.sh   # frontmatter агентов и скиллов, модели-алиасы, ссылки superpowers:, general-purpose в spec/sdd
 bash -n install.sh
+sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент
 ```
+
+Чтобы проверить тест мутантом: `sed '<правка>' install.sh > "$m" && INSTALL_SH="$m" sh tests/install.test.sh`.
 
 Срабатывание `spec` и `sdd` проверяется наборами фраз в `tests/evals/` — как запускать, написано в `tests/evals/README.md`.
 
