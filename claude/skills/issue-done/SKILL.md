@@ -52,7 +52,7 @@ happens via the PR.
 ### SDD feature branch
 
 If the current branch is the feature branch of an SDD run (`Ветка фичи` in the
-project's `## SDD`, with `.claude/context/sdd/<feature>/pr.md` present):
+project's `## SDD`, with `.sdd/<feature>/pr.md` present):
 
 - The PR body is `pr.md`; `Closes` lists the issues of every partition.
 - `PR: я` → don't push and don't open the PR. Print the exact commands

@@ -4,7 +4,7 @@ __pycache__/
 *.pyc
 everything-claude-code/
 _attic/
-.claude/worktrees/
+.worktrees/
 .claude/commands/
 .superpowers/
 claude/skills/ui-ux-pro-max/

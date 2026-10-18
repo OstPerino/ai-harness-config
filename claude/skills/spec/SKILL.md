@@ -76,7 +76,7 @@ it's right.
 ```
 Agent(subagent_type: "planner", prompt: """
 Mode: partitions
-Project: <repo path>. Spec being written: <abs path of .claude/context/specs/<feature>.md>.
+Project: <repo path>. Spec being written: <abs path of .sdd/specs/<feature>.md>.
 Issue: <ref>. Stack: <summary>.
 Agreed design:
 <the approved sections, verbatim>
@@ -92,10 +92,12 @@ so.
 ## 8. Assemble the spec — and re-check premises yourself
 
 Fill `~/.claude/skills/sdd/references/spec.md` and write it to
-`.claude/context/specs/<feature>.md` (or `docs/specs/<date>-<feature>.md` if the
+`.sdd/specs/<feature>.md` (or `docs/specs/<date>-<feature>.md` if the
 repo already keeps specs there — `sdd` looks in both).
 
-**Before writing, make sure git ignores `.claude/context/`.** Work repo
+**Before writing, make sure git ignores `.sdd/`** — unless `## SDD` says
+`Артефакты SDD: коммитить`. SDD files never go under `.claude/`: Claude Code
+asks for permission on every write there. Work repo
 (`## SDD` says `рабочий`, or the path is under `~/Job/`) → append to
 `.git/info/exclude`, never to `.gitignore`. Pet repo → append to `.gitignore`.
 Say what you added. A spec left untracked in a work repo ends up in someone's
@@ -120,7 +122,7 @@ approval:
 ## Rules
 
 - One question per message.
-- The spec is in Russian, like the rest of `.claude/context/`.
+- The spec is in Russian, like the rest of the SDD artifacts.
 - Never dispatch a generic subagent for planning — partitions come from
   `planner`.
 - Keep the spec thin: a map for executors, not a line-by-line script. If it is
