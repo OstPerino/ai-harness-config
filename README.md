@@ -204,7 +204,7 @@ ai-harness-config/
 ```bash
 sh tests/lint-harness.sh   # frontmatter агентов и скиллов, модели-алиасы, ссылки superpowers:, general-purpose в spec/sdd
 bash -n install.sh
-sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент
+sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент, бэкап, prune своих и чужих висячих ссылок
 ```
 
 Чтобы проверить тест мутантом: `sed '<правка>' install.sh > "$m" && INSTALL_SH="$m" sh tests/install.test.sh`.
