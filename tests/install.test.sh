@@ -134,18 +134,21 @@ t_prune() {
   mkdir -p "$sb/home/skills"
   ln -s "$sb/repo/claude/skills/s2" "$sb/home/skills/s2"
   rm -r "$sb/repo/claude/skills/s2"
+  mkdir -p "$sb/home/agents"
+  ln -s "$sb/repo/claude/agents/gone.md" "$sb/home/agents/gone.md"
   run_install
   assert_status 0
   assert_not_exists "$sb/home/skills/s2"
-  assert_output_contains "linked=4 unchanged=0 backed_up=0 pruned=1"
+  assert_not_exists "$sb/home/agents/gone.md"
+  assert_output_contains "linked=4 unchanged=0 backed_up=0 pruned=2"
 }
 
 t_prune_foreign() {
   mkdir -p "$sb/home/skills"
-  ln -s "$sb/elsewhere/foreign" "$sb/home/skills/foreign"
+  ln -s "$sb/repo/claude-other/foreign" "$sb/home/skills/foreign"
   run_install
   assert_status 0
-  assert_link "$sb/home/skills/foreign" "$sb/elsewhere/foreign"
+  assert_link "$sb/home/skills/foreign" "$sb/repo/claude-other/foreign"
   assert_output_contains "linked=5 unchanged=0 backed_up=0 pruned=0"
 }
 
