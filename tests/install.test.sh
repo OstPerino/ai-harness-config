@@ -14,8 +14,13 @@ sb=""
 status=0
 
 sandbox() {
-  sb=$(mktemp -d "${TMPDIR:-/tmp}/install-test.XXXXXX")
-  sb=$(cd "$sb" && pwd)
+  sb=$(mktemp -d "${TMPDIR:-/tmp}/install-test.XXXXXX") || exit 1
+  [ -n "$sb" ] && [ -d "$sb" ] || exit 1
+  sb=$(cd "$sb" && pwd) || exit 1
+  case "${sb##*/}" in
+    install-test.??????) ;;
+    *) exit 1 ;;
+  esac
   trap 'rm -rf "${sb:?}"' EXIT
   mkdir -p "$sb/repo/claude/agents" "$sb/repo/claude/skills/s1" "$sb/repo/claude/skills/s2" "$sb/home"
   cp "$INSTALL_SH" "$sb/repo/install.sh"
@@ -33,7 +38,7 @@ run_install() {
 
 fail() {
   printf 'FAIL %s: %s / %s\n' "$SCENARIO" "$1" "$2"
-  exit 1
+  exit 70
 }
 
 assert_status() {
@@ -112,9 +117,15 @@ total=0
 for SCENARIO in link unchanged dry-run bad-arg; do
   total=$((total + 1))
   fn="t_$(printf '%s' "$SCENARIO" | tr - _)"
-  if ( sandbox; "$fn" ); then
+  set +e
+  ( set -e; sandbox; "$fn" )
+  rc=$?
+  set -e
+  if [ "$rc" -eq 0 ]; then
     passed=$((passed + 1))
     printf 'ok %s\n' "$SCENARIO"
+  elif [ "$rc" -ne 70 ]; then
+    printf 'FAIL %s: setup and commands succeed / exit status %s\n' "$SCENARIO" "$rc"
   fi
 done
 
