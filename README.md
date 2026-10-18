@@ -207,7 +207,7 @@ bash -n install.sh
 sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент, бэкап, prune своих и чужих висячих ссылок
 ```
 
-Чтобы проверить тест мутантом: `sed '<правка>' install.sh > "$m" && INSTALL_SH="$m" sh tests/install.test.sh`.
+Чтобы проверить тест мутантом: `m=$(mktemp); sed '<правка>' install.sh > "$m" && INSTALL_SH="$m" sh tests/install.test.sh`.
 
 Срабатывание `spec` и `sdd` проверяется наборами фраз в `tests/evals/` — как запускать, написано в `tests/evals/README.md`.
 

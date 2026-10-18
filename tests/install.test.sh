@@ -69,7 +69,7 @@ assert_file_content() {
 }
 
 snapshot() {
-  ls -lAR "$1" >"$2"
+  ls -liAR "$1" >"$2"
 }
 
 assert_tree_unchanged() {
@@ -104,6 +104,9 @@ t_unchanged() {
 }
 
 t_dry_run() {
+  mkdir -p "$sb/home/agents"
+  printf 'mine\n' >"$sb/home/agents/a.md"
+  ln -s "$sb/repo/claude/agents/gone.md" "$sb/home/agents/gone.md"
   snapshot "$sb/home" "$sb/snapshot.before"
   run_install --dry-run
   assert_status 0
