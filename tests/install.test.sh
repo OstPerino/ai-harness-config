@@ -62,6 +62,12 @@ assert_output_contains() {
     fail "output contains '$1'" "$(tail -n 5 "$sb/out" | tr '\n' '|')"
 }
 
+assert_file_content() {
+  [ -f "$1" ] && [ ! -L "$1" ] || fail "regular file $1" "missing or symlink"
+  actual=$(cat "$1")
+  [ "$actual" = "$2" ] || fail "$1 contains '$2'" "$1 contains '$actual'"
+}
+
 snapshot() {
   ls -lAR "$1" >"$2"
 }
@@ -112,9 +118,40 @@ t_bad_arg() {
   assert_not_exists "$sb/home/agents"
 }
 
+t_backup() {
+  mkdir -p "$sb/home/agents"
+  printf 'mine\n' >"$sb/home/agents/a.md"
+  run_install
+  assert_status 0
+  set -- "$sb"/home/backups/harness-*
+  [ "$#" -eq 1 ] && [ -d "$1" ] || fail "exactly one directory home/backups/harness-*" "$# matches: $*"
+  assert_file_content "$1/a.md" "mine"
+  assert_link "$sb/home/agents/a.md" "$sb/repo/claude/agents/a.md"
+  assert_output_contains "linked=5 unchanged=0 backed_up=1 pruned=0"
+}
+
+t_prune() {
+  mkdir -p "$sb/home/skills"
+  ln -s "$sb/repo/claude/skills/s2" "$sb/home/skills/s2"
+  rm -r "$sb/repo/claude/skills/s2"
+  run_install
+  assert_status 0
+  assert_not_exists "$sb/home/skills/s2"
+  assert_output_contains "linked=4 unchanged=0 backed_up=0 pruned=1"
+}
+
+t_prune_foreign() {
+  mkdir -p "$sb/home/skills"
+  ln -s "$sb/elsewhere/foreign" "$sb/home/skills/foreign"
+  run_install
+  assert_status 0
+  assert_link "$sb/home/skills/foreign" "$sb/elsewhere/foreign"
+  assert_output_contains "linked=5 unchanged=0 backed_up=0 pruned=0"
+}
+
 passed=0
 total=0
-for SCENARIO in link unchanged dry-run bad-arg; do
+for SCENARIO in link unchanged dry-run bad-arg backup prune prune-foreign; do
   total=$((total + 1))
   fn="t_$(printf '%s' "$SCENARIO" | tr - _)"
   set +e
