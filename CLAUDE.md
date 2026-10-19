@@ -19,10 +19,12 @@
 
 | слой (пути) | исполнитель | ревьюер |
 |---|---|---|
-| tests/ | test-dev | backend-reviewer |
+| tests/ (без своей партии) | test-dev | backend-reviewer |
+| claude/agents/, claude/skills/, claude/CLAUDE.md | harness-dev | planner |
+| install.sh, claude/hooks/, claude/settings.d/, claude/bin/, .github/, tests/ своей партии | devops-dev | backend-reviewer; security-reviewer для защиты (#008) |
 
 - Тип репо: пет
-- Гейт: `sh tests/lint-harness.sh && bash -n install.sh && sh tests/install.test.sh`
+- Гейт: `sh tests/gate.sh` (до его появления — `sh tests/lint-harness.sh && bash -n install.sh && sh tests/install.test.sh`)
 - Подготовка worktree: нет
 - Основная ветка: main
 - Ветка фичи: sdd/<фича>
@@ -34,5 +36,5 @@
 - Утверждение брифов: первый — владелец, остальные — ведущий
 - E2E: нет
 - Worktree: .worktrees/
-- Параллельные партии: нет
+- Параллельные партии: да
 - В бриф копировать: «Код», «Коммиты»
