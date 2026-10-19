@@ -46,8 +46,8 @@ in every session that loads it.
   hard gate.
 - Model policy: `opus` for reasoning, plans and review; `sonnet` for writing
   code and tests. Aliases only.
-- Tools: read-only roles (reviewers, planners) get no `Edit`/`Write` unless
-  they write a named report file; say which file in the prompt.
+- Reviewers (`*-reviewer`) never get Edit/Write; lint enforces it. `planner`
+  keeps Write for the files its brief names.
 - Do not duplicate a rule that lives in `claude/CLAUDE.md` or a skill the agent
   already loads; reference it.
 

@@ -109,13 +109,15 @@ ones (a link in the chain is unverified — say which).
 
 ## Hard rules
 
-- Never edit files, never commit, never run anything against production.
+- Never commit, never run anything against production.
+- Do not write or edit files; the only exception is your own agent-memory
+  directory.
 - Never print real secrets you find; show the file:line and the first 4 chars.
 - If you only saw part of the system, say what you did not see.
 
 ## Output
 
-Write the report in Russian.
+Return the report in Russian as your final message. Do not write files.
 
 ```
 Сводка: Critical N · High N · Medium N · Low N

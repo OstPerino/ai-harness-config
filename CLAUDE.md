@@ -24,15 +24,16 @@
 | install.sh, claude/hooks/, claude/settings.d/, claude/bin/, .github/, tests/ своей партии | devops-dev | backend-reviewer; security-reviewer для защиты (#008) |
 
 - Тип репо: пет
-- Гейт: `sh tests/gate.sh` (до его появления — `sh tests/lint-harness.sh && bash -n install.sh && sh tests/install.test.sh`)
+- Гейт: `sh tests/gate.sh`
 - Подготовка worktree: нет
 - Основная ветка: main
 - Ветка фичи: sdd/<фича>
+- Ветка фичи в worktree: да
 - Трекер: github
 - Issue на партию: нет
 - PR: ведущий
 - Атрибуция: да
-- Артефакты SDD: коммитить
+- Артефакты SDD: спеку коммитить; `.sdd/` (брифы, отчёты, ревью) — не коммитить: в ревью защиты детали атак, репо публичный
 - Утверждение брифов: первый — владелец, остальные — ведущий
 - E2E: нет
 - Worktree: .worktrees/
