@@ -7,7 +7,7 @@
 <p>
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude_Code-harness-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
   <img alt="Agents" src="https://img.shields.io/badge/agents-13-5A67D8?style=for-the-badge">
-  <img alt="Skills" src="https://img.shields.io/badge/skills-14-38A169?style=for-the-badge">
+  <img alt="Skills" src="https://img.shields.io/badge/skills-15-38A169?style=for-the-badge">
   <img alt="Install" src="https://img.shields.io/badge/install-symlinks-718096?style=for-the-badge&logo=gnubash&logoColor=white">
 </p>
 
@@ -113,6 +113,7 @@ flowchart LR
 | `git-flow` | коммиты `type(scope): subject` с эмодзи; bootstrap ставит хук в любой репозиторий |
 | `project-checkpoint` | «сделай чекпоинт»: `STATUS.md` и хэндофф перед `/clear` |
 | `learn` | только командой `/learn`: неочевидная находка из сессии → правило в агенте, скилле или `claude/CLAUDE.md` после «да» |
+| `harness-stats` | только командой `/harness-stats`: сессии до и после установки харнесса по локальным транскриптам — прерывания, раздражение, ошибки инструментов, блоки и сбои хуков, отчёты typecheck, сабагенты, токены; `--save` пишет снимок в `~/.claude/harness-stats/` |
 | **Дисциплина** (копии из superpowers 6.4.1, [VENDORED](claude/skills/VENDORED.md)) ||
 | `systematic-debugging` | баг или красный тест: сначала причина, потом правка |
 | `test-driven-development` | тест до кода, и он должен упасть |
@@ -221,7 +222,7 @@ ai-harness-config/
 ├── claude/                 → ставится в ~/.claude
 │   ├── CLAUDE.md           глобальные правила: ревью, комментарии в коде, атрибуция
 │   ├── agents/             13 агентов
-│   ├── skills/             14 скиллов (sdd/references — шаблоны артефактов, git-flow/templates — хук)
+│   ├── skills/             15 скиллов (sdd/references — шаблоны артефактов, git-flow/templates — хук)
 │   ├── hooks/              guard-net/rm/write, jira-write-guard, session-status, typecheck
 │   └── settings.d/         фрагменты settings.json: 10-hooks, 20-security, 30-quality
 ├── docs/                   спеки и планы работ над харнессом
@@ -263,6 +264,7 @@ sh tests/lint-harness.sh   # frontmatter агентов и скиллов, мо�
 bash -n install.sh
 sh tests/install.test.sh   # install.sh в песочнице: ссылки, повторный прогон, --dry-run, неизвестный аргумент, бэкап, prune, слияние settings.d, отказ из worktree, схема манифеста
 sh tests/guards.test.sh    # guard-net, guard-rm, guard-write, слитые правила 20-security
+sh tests/harness-stats.test.sh  # метрики /harness-stats на синтетических транскриптах
 sh tests/hooks.test.sh     # jira-write-guard, session-status
 sh tests/typecheck.test.sh # typecheck.sh и фрагмент 30-quality
 ```
