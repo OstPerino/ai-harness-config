@@ -49,6 +49,7 @@ disk before doing it again.
 | `work` | `<id>-report.md` and commits since the partition base | don't dispatch; go to the gate (§5.3) |
 | `work` | commits but no report | ask the owner whether the executor still runs in another session; if not, lost executor (below) |
 | `review` | `<id>-review.md` | don't dispatch a reviewer; go to the fix round |
+| `review` | no `<id>-review.md` | the reviewer did not finish or its answer was lost; dispatch the reviewer again |
 | `fix` | «Фикс-раунд» section in the report | the fix round is over; go to the gate after fix (§5.5) |
 
 **Lost executor.** A partition in `work`/`fix` with no report for the current
@@ -84,6 +85,7 @@ owner the previous executor's context is lost.
    | Атрибуция | да | нет (если правила репо не говорят иначе) |
    | Скрыть артефакты | `.gitignore` | `.git/info/exclude` |
    | Ветка фичи | `sdd/<фича>` | спросить шаблон (`feature/<KEY>-<slug>`) |
+   | Ветка фичи в worktree | нет; да для самого харнесса | нет |
 
 6. Write the section:
    - пет → `CLAUDE.md`;
@@ -93,16 +95,17 @@ owner the previous executor's context is lost.
 
 ## 3. Where SDD files live, and hiding them
 
-- Worktrees: `.worktrees/<feature>-<id>` (key `Worktree`). Specs: `.sdd/specs/`
-  or the repo's `docs/specs/`. Partition files: `.sdd/<feature>/`.
+- Worktrees: `<Worktree>/<feature>-<id>` (key `Worktree`), relative to the
+  main checkout's root. Specs: `.sdd/specs/` or the repo's `docs/specs/`.
+  Partition files: `.sdd/<feature>/` in the feature tree (§4).
 - Nothing goes under `.claude/`: Claude Code asks for permission on every write
   to a project's `.claude/` directory, even in bypass mode, and an executor
   writing code in a worktree there triggers a prompt per file.
 
 Before the first partition, check that git ignores `.worktrees/` always, and
 `.sdd/`, `CLAUDE.local.md` (and `CLAUDE.md` when it isn't tracked) unless
-`Артефакты SDD: коммитить` (`git check-ignore -q <path>`); add the missing
-ones and say which:
+`Артефакты SDD: коммитить` (`git -C <feature tree> check-ignore -q <path>`);
+add the missing ones and say which:
 
 - **рабочий** → append to `.git/info/exclude`, one bare pattern per line (`#` in
   the middle of a line is not a comment there). Never edit the project's
@@ -113,10 +116,10 @@ With `Артефакты SDD: коммитить` the lead commits the spec stat
 partition files on the feature branch after each merge.
 
 **Merge guard.** Before every merge into the feature branch, look at what the
-partition brings, not at the main tree:
+partition brings, not at the feature tree:
 
 ```bash
-git diff --name-only <feature-branch>...<feature-branch>-<id> \
+git -C <feature tree> diff --name-only <feature-branch>...<feature-branch>-<id> \
   | grep -E '^\.worktrees/|^\.sdd/|^CLAUDE\.local\.md$'
 ```
 
@@ -126,9 +129,19 @@ Partition files are committed by the lead, never by executors.
 
 ## 4. Feature branch
 
-From `Основная ветка`, named by `Ветка фичи`. Create it if it doesn't exist;
-the main working tree stays on it during the whole run. Uncommitted changes in
-the main working tree that aren't yours → stop and ask.
+From `Основная ветка`, named by `Ветка фичи`. Create it if it doesn't exist.
+Its working tree — **the feature tree** — depends on `Ветка фичи в worktree`:
+
+- `да` → `<Worktree>/<feature>`:
+  `git -C <repo> worktree add <repo>/<Worktree>/<feature> -b <feature-branch> <Основная ветка>`
+  (without `-b` when the branch exists). The main checkout stays on
+  `Основная ветка`; never switch its branch.
+- `нет` or no key → the main checkout, on the feature branch for the whole run.
+
+Run git in any tree other than the session's working directory as
+`git -C <path> …`, never `cd <path> && git …`: the write guard resolves git's
+directory from the session's working directory, not from `cd`. Uncommitted
+changes in the feature tree that aren't yours → stop and ask.
 
 ## 5. Partition loop
 
@@ -141,8 +154,8 @@ Create the worktree from the current head of the feature branch (unless it
 already exists — §1), then prepare it:
 
 ```bash
-git worktree add <Worktree>/<feature>-<id> -b <feature-branch>-<id> <feature-branch>
-cd <Worktree>/<feature>-<id> && <Подготовка worktree>
+git -C <feature tree> worktree add <repo>/<Worktree>/<feature>-<id> -b <feature-branch>-<id> <feature-branch>
+cd <repo>/<Worktree>/<feature>-<id> && <Подготовка worktree>
 ```
 
 Run the gate once in the fresh worktree before the planner: it must be green on
@@ -194,8 +207,8 @@ and tell the owner.
 ### 5.3 Gate
 
 Run `Гейт` from `## SDD` inside the worktree; write the output to
-`.sdd/<feature>/<id>-gate.log` in the **main** working tree, not
-inside the worktree (an untracked file there blocks `git worktree remove`).
+`.sdd/<feature>/<id>-gate.log` in the feature tree, not inside the
+partition worktree (an untracked file there blocks `git worktree remove`).
 Green → read the summary lines. Red → read the whole failing output, never
 `head`/`tail` it.
 
@@ -212,12 +225,18 @@ test. Report without numbers → back to the executor.
 
 ```
 Agent(subagent_type: "<reviewer from ## SDD>", prompt: """
+<«Mode: review» as the first line when the reviewer is planner>
 Review partition <id> <name>.
 Brief: <path>. Report: <path>. Commits: <base>..<head> on <branch> in <worktree>.
-Write the review to <path>/<id>-review.md using
-~/.claude/skills/sdd/references/review.md. One pass: there is no re-review.
+Return the review as your final message using
+~/.claude/skills/sdd/references/review.md. Do not write files. One pass: there
+is no re-review.
 """)
 ```
+
+The reviewer writes no files. As soon as its answer arrives, before anything
+else, write it verbatim to `.sdd/<feature>/<id>-review.md` in the feature
+tree, without your own edits.
 
 ### 5.5 Fix round — `fix (agent <id>)`, exactly one
 
@@ -233,13 +252,13 @@ retries are not fix rounds); red twice in a row → stop, as in §5.3. Minor fin
 
 ### 5.6 Merge — `done`
 
-In the main working tree, on the feature branch:
+In the feature tree:
 
 ```bash
-git merge --no-ff <feature-branch>-<id> -m "Merge partition <id> <name>"
-<gate>
-git worktree remove <worktree path>
-git branch -d <feature-branch>-<id>
+git -C <feature tree> merge --no-ff <feature-branch>-<id> -m "Merge partition <id> <name>"
+<gate, run in the feature tree>
+git -C <feature tree> worktree remove <partition worktree path>
+git -C <feature tree> branch -d <feature-branch>-<id>
 ```
 
 Gate red after the merge → the partition is not done; fix on the feature branch
@@ -261,8 +280,10 @@ The finishing steps are rows of the partitions table — `final`, `fixes`, `pr` 
 so they resume like partitions.
 
 1. **Final review** (`final` row), one per layer touched, over
-   `<Основная ветка>...<feature-branch>`, written to
-   `final-review-<layer>.md` from `final-review.md`. Add `security-reviewer`
+   `<Основная ветка>...<feature-branch>`. The reviewer returns the text in the
+   format of `final-review.md`; you write it verbatim to
+   `final-review-<layer>.md`. When the layer's reviewer is planner, the
+   prompt's first line is `Mode: review`, as in §5.4. Add `security-reviewer`
    only if the spec's «Безопасность» says `да` or the owner asks.
 2. **Partition `fixes`** (`fixes` row; `done` right away if there is nothing
    to fix) for Critical/Important from the final reviews: brief →

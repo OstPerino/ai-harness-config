@@ -1,0 +1,127 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(~/**/.env)",
+      "Read(~/**/.env.*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/Library/Keychains/**)",
+      "Read(~/.claude.json)",
+      "Read(~/.netrc)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.npmrc)",
+      "Read(~/.git-credentials)",
+      "Read(~/.kube/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.pypirc)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.claude/.credentials.json)",
+      "Bash(security find-generic-password *)",
+      "Bash(security find-internet-password *)",
+      "Bash(security dump-keychain*)",
+      "Bash(security export *)",
+      "Bash(sh)",
+      "Bash(bash)",
+      "Bash(zsh)",
+      "Bash(dash)",
+      "Bash(sh -)",
+      "Bash(bash -)",
+      "Bash(sh -s*)",
+      "Bash(bash -s*)",
+      "Bash(zsh -s*)",
+      "Bash(sudo sh*)",
+      "Bash(sudo bash*)",
+      "Bash(git push *--force*main*)",
+      "Bash(git push *main*--force*)",
+      "Bash(git push *-f *main*)",
+      "Bash(git push *main* -f*)",
+      "Bash(git push *+main*)",
+      "Edit(~/.claude/settings.json)",
+      "Edit(~/.claude/.ai-harness-managed.json)",
+      "Edit(~/.claude/hooks/**)",
+      "Edit(~/.claude.json)",
+      "Edit(.claude/settings.json)",
+      "Edit(.claude/settings.local.json)",
+      "Edit(**/.claude/settings.json)",
+      "Edit(**/.claude/settings.local.json)",
+      "Bash(git push *-uf *main*)",
+      "Bash(git push *main* -uf*)",
+      "Bash(git push *+HEAD:main*)",
+      "Bash(git push *--force*master*)",
+      "Bash(git push *master*--force*)",
+      "Bash(git push *-f *master*)",
+      "Bash(git push *master* -f*)",
+      "Bash(git push *-uf *master*)",
+      "Bash(git push *master* -uf*)",
+      "Bash(git push *+master*)",
+      "Bash(git push *+HEAD:master*)",
+      "mcp__telegram__delete_*",
+      "mcp__telegram__ban_user",
+      "mcp__telegram__leave_chat",
+      "mcp__telegram__block_user",
+      "mcp__telegram__set_privacy_settings",
+      "mcp__telegram__update_profile",
+      "mcp__telegram__edit_admin_rights",
+      "mcp__telegram-mcp__delete_*",
+      "mcp__telegram-mcp__ban_user",
+      "mcp__telegram-mcp__leave_chat",
+      "mcp__telegram-mcp__block_user",
+      "mcp__telegram-mcp__set_privacy_settings",
+      "mcp__telegram-mcp__update_profile",
+      "mcp__telegram-mcp__edit_admin_rights"
+    ],
+    "ask": [
+      "mcp__telegram__send_message",
+      "mcp__telegram__reply_to_message",
+      "mcp__telegram__send_*",
+      "mcp__telegram__forward_*",
+      "mcp__telegram__edit_*",
+      "mcp__telegram__send_scheduled_message",
+      "mcp__telegram-mcp__send_*",
+      "mcp__telegram-mcp__forward_*",
+      "mcp__telegram-mcp__edit_*",
+      "mcp__telegram-mcp__reply_to_message",
+      "mcp__telegram-mcp__send_scheduled_message"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/guard-net.sh",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/guard-rm.sh",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash|mcp__.*download.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/guard-write.sh",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -43,11 +43,31 @@ for agent in "$CLAUDE"/agents/*.md; do
   base=$(basename "$agent" .md)
   name=$(field "$agent" name)
   [ "$name" = "$base" ] || err "agents/$base.md" "name '$name' does not match file name"
-  [ -n "$(field "$agent" description)" ] || err "agents/$base.md" "missing description"
+  desc=$(field "$agent" description)
+  [ -n "$desc" ] || err "agents/$base.md" "missing description"
+  len=$(printf %s "$desc" | wc -c | tr -d ' ')
+  [ "$len" -le 500 ] || err "agents/$base.md" "description is $len bytes, limit 500: it loads into every session"
   model=$(field "$agent" model)
   case "$model" in
-    "" | opus | sonnet | haiku | fable | inherit) ;;
+    "") err "agents/$base.md" "missing model" ;;
+    opus | sonnet | haiku | fable | inherit) ;;
     *) err "agents/$base.md" "model '$model' is not an alias (opus|sonnet|haiku|fable|inherit); harness policy pins aliases so agents follow new model versions" ;;
+  esac
+  case "$base" in
+    *-reviewer)
+      tools=$(field "$agent" tools)
+      if [ -z "$tools" ]; then
+        err "agents/$base.md" "reviewer must list tools on one line: an empty tools field inherits Edit and Write"
+      else
+        set -f
+        for tool in $(printf %s "$tools" | tr ',' ' ' | tr -d '[]"'"'"); do
+          case "$tool" in
+            *'*'* | Edit | Write | MultiEdit | NotebookEdit) err "agents/$base.md" "reviewer must not have tool '$tool'" ;;
+          esac
+        done
+        set +f
+      fi
+      ;;
   esac
 done
 

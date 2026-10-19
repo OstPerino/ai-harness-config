@@ -11,6 +11,7 @@
 - Подготовка worktree: <`команда`, напр. `pnpm install --frozen-lockfile && cp ../../../.env .` | нет>
 - Основная ветка: <main | master | …>
 - Ветка фичи: <sdd/<фича> | шаблон, напр. feature/<KEY>-<slug>>
+- Ветка фичи в worktree: <да | нет>
 - Трекер: <github | jira <KEY> | нет>
 - Issue на партию: <да | нет>
 - PR: <ведущий | я>

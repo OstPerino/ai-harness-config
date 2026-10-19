@@ -4,8 +4,9 @@ description: >
   Gets a red build back to green with the smallest correct diff: TypeScript
   errors (tsc, vue-tsc, nuxi typecheck), lint errors, bundler/build failures,
   Rust cargo check/clippy errors. Use when typecheck, lint or build fail after
-  a change, dependency upgrade or merge. Not for refactoring, features or
-  failing tests caused by wrong behavior.
+  a change, dependency upgrade or merge. Not for refactoring
+  (refactor-cleaner), features or failing tests caused by wrong behavior
+  (node-dev, frontend-dev; test-dev when the test itself is wrong).
 model: sonnet
 color: yellow
 memory: user
