@@ -132,7 +132,7 @@ t_rm_outside_abs() { rm_block 'rm -rf /srv/guards-other'; }
 t_rm_parent_rel() { rm_block 'rm -rf ../other'; }
 t_rm_dotdot_escape() { rm_block 'rm -rf build/../../x'; }
 t_rm_project_itself() { rm_block 'rm -rf .'; }
-t_rm_tmp_itself() { rm_block "rm -rf $sb/tmp"; }
+t_rm_tmp_itself() { G_TMP=/guards-tmp/; rm_block "rm -rf /guards-tmp"; G_TMP=; }
 t_rm_flags_fr() { rm_block 'rm -fr ~/x'; }
 t_rm_flags_long() { rm_block 'rm --recursive --force /opt/x'; }
 t_rm_sudo() { rm_block 'sudo rm -rf /var/x'; }
