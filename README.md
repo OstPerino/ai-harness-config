@@ -6,7 +6,7 @@
 
 <p>
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude_Code-harness-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
-  <img alt="Agents" src="https://img.shields.io/badge/agents-13-5A67D8?style=for-the-badge">
+  <img alt="Agents" src="https://img.shields.io/badge/agents-14-5A67D8?style=for-the-badge">
   <img alt="Skills" src="https://img.shields.io/badge/skills-15-38A169?style=for-the-badge">
   <img alt="Install" src="https://img.shields.io/badge/install-symlinks-718096?style=for-the-badge&logo=gnubash&logoColor=white">
 </p>
@@ -82,6 +82,7 @@ flowchart LR
 | `planner` | Opus | 👁️ | Три режима: `partitions` режет дизайн на партии с владельцами из `## SDD`, `brief` пишет бриф партии, заново проверив каждую премиссу грепом, `review` ревьюит партии с промптами и скиллами и возвращает ревью текстом |
 | **Разработка** ||||
 | `frontend-dev` | Sonnet | ✍️ | React / Next.js, Vue / Nuxt |
+| `mobile-dev` | Sonnet | ✍️ | React Native / Expo: dev build и config plugins, жизненный цикл, разрешения, push; что нельзя проверить без устройства — чеклистом в отчёт |
 | `node-dev` | Sonnet | ✍️ | Node.js / TypeScript бэкенд: NestJS, Fastify, Prisma, Postgres, Redis, WebSocket |
 | `devops-dev` | Sonnet | ✍️ | Docker, compose, nginx, один VPS, CI, shell-скрипты, git-хуки и установщики. Не деплоит и не генерирует секреты |
 | `harness-dev` | Opus | ✍️ | Промпты агентов и скиллов, глобальные правила харнесса |
@@ -91,7 +92,7 @@ flowchart LR
 | `build-fixer` | Sonnet | ✍️ | Чинит tsc / lint / build / `cargo check` минимальным диффом. Каждый `as any` и `@ts-ignore` — в отчёт с причиной |
 | `refactor-cleaner` | Sonnet | ✍️ | Удаляет мёртвый код и зависимости пачками по knip, с полным прогоном проверок после каждой пачки |
 | **Ревью** ||||
-| `frontend-reviewer` | Opus | 👁️ | Ревью фронта и тестов: «какую строку испортить, чтобы тест покраснел?» |
+| `frontend-reviewer` | Opus | 👁️ | Ревью фронта, React Native и тестов: «какую строку испортить, чтобы тест покраснел?» |
 | `backend-reviewer` | Opus | 👁️ | Ревью бэка и shell-скриптов: доступ к чужим id, идемпотентность, границы транзакций, миграции и индексы, контракт |
 | `security-reviewer` | Opus | 👁️ | Уязвимости с конкретным путём атаки; вердикт BLOCK / APPROVE WITH CHANGES / APPROVE |
 | **Сервис** ||||
