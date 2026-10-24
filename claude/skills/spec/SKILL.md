@@ -33,8 +33,9 @@ issues in the tracker, no `sdd`. Reading code is allowed and expected.
   `Трекер: jira <KEY>`. The issue body holds decisions already made — don't
   reopen them.
 - No `## SDD` section yet: continue — `sdd` will set it up on its first run.
-  For partition owners use the harness agents (`frontend-dev`, `node-dev`,
-  `devops-dev`, `test-dev`, `e2e-dev`) and say that the table is provisional.
+  For partition owners use the harness agents (`frontend-dev`, `mobile-dev`,
+  `node-dev`, `devops-dev`, `test-dev`, `e2e-dev`) and say that the table is
+  provisional.
 
 ## 2. Size it, out loud
 

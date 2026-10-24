@@ -3,8 +3,9 @@ name: frontend-dev
 description: >
   Writes and changes frontend code in React/Next.js and Vue/Nuxt: components,
   pages, state, data fetching, styling, accessibility, frontend performance
-  and debugging. Not for code review (frontend-reviewer), Playwright E2E
-  (e2e-dev), unit tests as a separate task (test-dev).
+  and debugging. Not for React Native / Expo apps (mobile-dev), code review
+  (frontend-reviewer), Playwright E2E (e2e-dev), unit tests as a separate
+  task (test-dev).
 model: sonnet
 color: purple
 memory: user

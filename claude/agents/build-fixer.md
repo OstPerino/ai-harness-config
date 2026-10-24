@@ -6,7 +6,8 @@ description: >
   Rust cargo check/clippy errors. Use when typecheck, lint or build fail after
   a change, dependency upgrade or merge. Not for refactoring
   (refactor-cleaner), features or failing tests caused by wrong behavior
-  (node-dev, frontend-dev; test-dev when the test itself is wrong).
+  (node-dev, frontend-dev, mobile-dev; test-dev when the test itself is
+  wrong).
 model: sonnet
 color: yellow
 memory: user
