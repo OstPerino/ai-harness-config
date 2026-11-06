@@ -1,0 +1,12 @@
+---
+name: e2e-dev
+description: >
+  Writes and stabilizes Playwright end-to-end tests: user journeys, page
+  objects, auth setup, network mocking, flaky-test diagnosis and quarantine.
+  Explores the running app through the Playwright MCP browser before writing
+  specs. Use for E2E coverage of a feature, reproducing a UI bug as a test, or
+  fixing flaky E2E tests. Not for unit/integration tests (test-dev).
+model: sonnet
+color: green
+memory: user
+---

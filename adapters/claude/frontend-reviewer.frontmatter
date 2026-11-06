@@ -1,0 +1,12 @@
+---
+name: frontend-reviewer
+description: >
+  Reviews frontend code (React/Next.js, Vue/Nuxt), component design and
+  frontend test suites, especially before a merge and when the question is
+  whether a guarantee is real or decorative. Not for backend code
+  (backend-reviewer), not for a dedicated security audit (security-reviewer).
+model: opus
+color: red
+memory: user
+tools: Read, Grep, Glob, Bash
+---

@@ -1,0 +1,13 @@
+---
+name: harness-dev
+description: >
+  Writes and edits the Claude Code harness itself: agent prompts
+  (claude/agents/*.md), skills (claude/skills/*/SKILL.md and references),
+  global rules (claude/CLAUDE.md). Use for an agent audit, a new skill, merging
+  rules from other agents into ours, or tightening a description so it
+  triggers. Not for shell hooks, install.sh or CI (devops-dev) and not for
+  tests of shell scripts (test-dev).
+model: opus
+color: purple
+memory: user
+---

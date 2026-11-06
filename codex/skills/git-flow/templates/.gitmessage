@@ -1,0 +1,6 @@
+# <type>(<scope>): <subject>   — imperative, English, ≤72 chars, no period
+#
+# Body: why, not what. Required for perf (with numbers) and non-obvious fixes.
+#
+# Types: feat fix refactor perf test docs style chore ci move remove wip init
+# The emoji is added by the commit-msg hook — don't type it.

@@ -1,0 +1,80 @@
+#!/bin/sh
+set -eu
+
+TYPES="feat fix refactor perf test docs style chore ci move remove wip init"
+MAX_HEADER=72
+
+emoji_for() {
+  case "$1" in
+    feat) printf '✨' ;;
+    fix) printf '🐛' ;;
+    refactor) printf '♻️' ;;
+    perf) printf '⚡️' ;;
+    test) printf '✅' ;;
+    docs) printf '📝' ;;
+    style) printf '🎨' ;;
+    chore) printf '🔧' ;;
+    ci) printf '🚀' ;;
+    move) printf '🚚' ;;
+    remove) printf '🗑️' ;;
+    wip) printf '🚧' ;;
+    init) printf '🎉' ;;
+    *) return 1 ;;
+  esac
+}
+
+msg_file="$1"
+header=$(sed -n '1p' "$msg_file")
+
+case "$header" in
+  "Merge "* | "Revert "* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+scopes=""
+config="$(git rev-parse --show-toplevel)/.gitflow"
+if [ -f "$config" ]; then
+  scopes=$(sed -n 's/^scopes=//p' "$config" | tr -d "\"'")
+fi
+
+fail() {
+  {
+    printf 'commit-msg: %s\n' "$1"
+    printf '  got:    %s\n' "$header"
+    printf '  want:   <type>(<scope>): <subject>\n'
+    printf '  types:  %s\n' "$TYPES"
+    [ -n "$scopes" ] && printf '  scopes: %s\n' "$scopes"
+  } >&2
+  exit 1
+}
+
+bare="$header"
+for t in $TYPES; do
+  e=$(emoji_for "$t")
+  case "$header" in
+    "$e "*) bare=${header#"$e "} ;;
+  esac
+done
+
+pattern='^([a-z]+)\(([a-z0-9._/-]+)\)!?: [^ ].*$'
+type=$(printf '%s\n' "$bare" | sed -n -E "s/$pattern/\\1/p")
+scope=$(printf '%s\n' "$bare" | sed -n -E "s/$pattern/\\2/p")
+
+[ -n "$type" ] || fail "header must be <type>(<scope>): <subject>"
+emoji=$(emoji_for "$type") || fail "unknown type '$type'"
+
+if [ -n "$scopes" ]; then
+  case " $scopes " in
+    *" $scope "*) ;;
+    *) fail "unknown scope '$scope'" ;;
+  esac
+fi
+
+length=$(printf '%s' "$bare" | LC_ALL=C.UTF-8 wc -m | tr -d ' ')
+[ "$length" -le "$MAX_HEADER" ] || fail "header is $length chars, max $MAX_HEADER"
+
+tmp="$msg_file.tmp.$$"
+{
+  printf '%s %s\n' "$emoji" "$bare"
+  sed '1d' "$msg_file"
+} >"$tmp"
+mv "$tmp" "$msg_file"

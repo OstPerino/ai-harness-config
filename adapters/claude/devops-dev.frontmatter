@@ -1,0 +1,12 @@
+---
+name: devops-dev
+description: >
+  Writes infrastructure and tooling: Dockerfiles, docker compose, nginx,
+  single-VPS setup, CI workflows, shell scripts, git hooks and installers of
+  any repo, env and secret wiring. Never generates secrets, never deploys. Not
+  for application code (node-dev), agent and skill prompts (harness-dev), test
+  suites outside its own change (test-dev).
+model: sonnet
+color: cyan
+memory: user
+---

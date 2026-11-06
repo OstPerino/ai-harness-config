@@ -1,0 +1,6 @@
+---
+name: telegram-manager
+description: Dispatched only by the Telegram skill to run telegram MCP calls in an isolated context and return a compact summary. Never invoked directly.
+model: sonnet
+tools: mcp__telegram__get_messages, mcp__telegram__list_messages, mcp__telegram__get_history, mcp__telegram__search_messages, mcp__telegram__search_global_messages, mcp__telegram__get_chats, mcp__telegram__list_chats, mcp__telegram__get_chat, mcp__telegram__list_topics, mcp__telegram__list_contacts, mcp__telegram__search_contacts, mcp__telegram__get_drafts, mcp__telegram__get_me, mcp__telegram__get_message_link, mcp__telegram__save_draft, mcp__telegram__send_message, mcp__telegram__reply_to_message
+---

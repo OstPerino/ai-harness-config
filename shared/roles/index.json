@@ -1,0 +1,54 @@
+[
+  {
+    "name": "backend-reviewer",
+    "description": "Reviews backend code, database schemas and migrations, API contracts, shell scripts and test suites, especially before a merge and when the question is whether a guarantee (idempotency, ordering, access check, transaction boundary) is real or decorative. Not for frontend code (frontend-reviewer), not for a dedicated security audit (security-reviewer)."
+  },
+  {
+    "name": "build-fixer",
+    "description": "Gets a red build back to green with the smallest correct diff: TypeScript errors (tsc, vue-tsc, nuxi typecheck), lint errors, bundler/build failures, Rust cargo check/clippy errors. Use when typecheck, lint or build fail after a change, dependency upgrade or merge. Not for refactoring (refactor-cleaner), features or failing tests caused by wrong behavior (node-dev, frontend-dev; test-dev when the test itself is wrong)."
+  },
+  {
+    "name": "devops-dev",
+    "description": "Writes infrastructure and tooling: Dockerfiles, docker compose, nginx, single-VPS setup, CI workflows, shell scripts, git hooks and installers of any repo, env and secret wiring. Never generates secrets, never deploys. Not for application code (node-dev), agent and skill prompts (harness-dev), test suites outside its own change (test-dev)."
+  },
+  {
+    "name": "e2e-dev",
+    "description": "Writes and stabilizes Playwright end-to-end tests: user journeys, page objects, auth setup, network mocking, flaky-test diagnosis and quarantine. Explores the running app through the Playwright MCP browser before writing specs. Use for E2E coverage of a feature, reproducing a UI bug as a test, or fixing flaky E2E tests. Not for unit/integration tests (test-dev)."
+  },
+  {
+    "name": "frontend-dev",
+    "description": "Writes and changes frontend code in React/Next.js and Vue/Nuxt: components, pages, state, data fetching, styling, accessibility, frontend performance and debugging. Not for code review (frontend-reviewer), Playwright E2E (e2e-dev), unit tests as a separate task (test-dev)."
+  },
+  {
+    "name": "frontend-reviewer",
+    "description": "Reviews frontend code (React/Next.js, Vue/Nuxt), component design and frontend test suites, especially before a merge and when the question is whether a guarantee is real or decorative. Not for backend code (backend-reviewer), not for a dedicated security audit (security-reviewer)."
+  },
+  {
+    "name": "harness-dev",
+    "description": "Writes and edits the {{CLIENT}} harness itself: agent prompts ({{REPO_AGENTS}}*.md), skills ({{REPO_SKILLS}}*/SKILL.md and references), global rules ({{REPO_RULES}}). Use for an agent audit, a new skill, merging rules from other agents into ours, or tightening a description so it triggers. Not for shell hooks, install.sh or CI (devops-dev) and not for tests of shell scripts (test-dev)."
+  },
+  {
+    "name": "node-dev",
+    "description": "Writes and changes backend Node.js/TypeScript code: HTTP and WebSocket APIs, database schema and migrations, queries, queues and background jobs, shared contracts, backend debugging. Not for code review (backend-reviewer), infra, CI and shell scripts (devops-dev), E2E tests (e2e-dev), unit tests as a separate task (test-dev)."
+  },
+  {
+    "name": "planner",
+    "description": "Plans SDD work for other agents. Three modes, chosen by the first line of the brief: \"Mode: partitions\" cuts an agreed design into partitions with owners, premises and a security flag (called by the spec skill); \"Mode: brief\" writes the brief for one partition after re-checking every premise in the code (called by the sdd skill); \"Mode: review\" reviews prompt and skill changes of a partition or a final range. Writes only the files the brief names. Not for writing code or one-file fixes."
+  },
+  {
+    "name": "refactor-cleaner",
+    "description": "Removes dead code, unused exports, files and dependencies, and consolidates duplicates — in small verified batches, without changing behavior. Uses knip and reference search; checks framework conventions (Nuxt auto-imports and file routes, NestJS DI, Next.js file conventions) before deleting. Use for cleanup passes and dependency hygiene. Not for feature work or redesigns (node-dev, frontend-dev), or test suites (test-dev)."
+  },
+  {
+    "name": "security-reviewer",
+    "description": "Application-security reviewer. Finds exploitable vulnerabilities in a diff, a module or a whole service: access control, injection, auth/session flaws, secrets, unsafe deserialization, SSRF, dependency CVEs. Use before merging anything that touches auth, access checks, user input, file uploads, raw SQL, WebSockets, infra exposure or secrets. Read-only: reviews, never edits."
+  },
+  {
+    "name": "telegram-manager",
+    "description": "Dispatched only by the Telegram skill to run telegram MCP calls in an isolated context and return a compact summary. Never invoked directly."
+  },
+  {
+    "name": "test-dev",
+    "description": "Writes unit and integration tests (Vitest/Jest, Testing Library, Supertest, NestJS testing module, Testcontainers, Rust test harness, POSIX sh runners for shell scripts). Use to cover a module, add regression tests for a bug, fill coverage gaps, or write the failing test first in TDD. Not for Playwright end-to-end tests (e2e-dev) and not for changing production behavior."
+  }
+]
