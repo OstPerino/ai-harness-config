@@ -9,6 +9,12 @@ if [ "${1:-}" = --target ]; then
     codex) exec sh "$(dirname "${BASH_SOURCE[0]}")/scripts/install-codex.sh" "$@" ;;
     claude) ;;
     all)
+      case "${1:-}" in
+        ''|--dry-run) ;;
+        -h|--help) exec bash "${BASH_SOURCE[0]}" --help ;;
+        *) echo 'install: all accepts only --dry-run' >&2; exit 1 ;;
+      esac
+      bash "${BASH_SOURCE[0]}" --target claude --dry-run >/dev/null
       sh "$(dirname "${BASH_SOURCE[0]}")/scripts/install-codex.sh" "$@"
       exec bash "${BASH_SOURCE[0]}" --target claude "$@"
       ;;

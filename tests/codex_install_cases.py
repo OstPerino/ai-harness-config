@@ -1,4 +1,6 @@
 import json
+import fcntl
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -14,7 +16,7 @@ class InstallerCases(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.base = Path(self.temp.name)
+        self.base = Path(self.temp.name).resolve()
         self.repo = self.base / 'repo with spaces'
         self.repo.mkdir()
         for name in ['install.sh', 'scripts', 'shared', 'adapters', 'codex', 'claude', '.generated-files']:
@@ -136,6 +138,107 @@ class InstallerCases(unittest.TestCase):
         self.run_install()
         self.run_install('--uninstall')
         self.assertEqual(json.loads(p.read_text())['hooks']['PreToolUse'], [entry])
+
+    def test_restore_works_with_corrupt_current_config_and_manifest(self):
+        self.codex.mkdir(parents=True)
+        (self.codex / 'config.toml').write_text('[tui]\n')
+        (self.skills / 'brainstorming').mkdir(parents=True)
+        (self.skills / 'brainstorming/SKILL.md').write_text('foreign')
+        result = self.run_install()
+        backup = next(line.removeprefix('backup: ') for line in result.stdout.splitlines() if line.startswith('backup: '))
+        (self.codex / 'config.toml').write_text('[broken')
+        (self.codex / 'harness/manifest.json').write_text('[]')
+        self.run_install('--restore', backup)
+        self.assertEqual((self.codex / 'config.toml').read_text(), '[tui]\n')
+        self.assertFalse((self.codex / 'harness/manifest.json').exists())
+        self.assertFalse((self.skills / 'spec').exists())
+
+    def test_restore_rejects_bad_journal_before_any_mutation(self):
+        result = self.run_install()
+        backup = Path(next(line.removeprefix('backup: ') for line in result.stdout.splitlines() if line.startswith('backup: ')))
+        rules = self.codex / 'AGENTS.md'
+        before = rules.read_bytes()
+        entries = [{'path': str(rules), 'kind': 'absent'}, {'path': str(self.codex / 'config.toml'), 'kind': 'file', 'copy': '../outside'}]
+        (backup / 'journal.json').write_text(json.dumps(entries))
+        self.run_install('--restore', str(backup), success=False)
+        self.assertEqual(rules.read_bytes(), before)
+
+    def test_symlinked_parent_rejected_without_writing_through_it(self):
+        self.codex.mkdir(parents=True)
+        foreign = self.base / 'foreign'
+        foreign.mkdir()
+        (self.codex / 'agents').symlink_to(foreign, target_is_directory=True)
+        self.run_install(success=False)
+        self.assertEqual(list(foreign.iterdir()), [])
+        self.assertFalse((self.codex / 'harness').exists())
+
+    def test_lock_precedes_manifest_read_and_covers_shared_skills(self):
+        name = hashlib.sha256(str(self.skills).encode()).hexdigest()
+        lock = Path('/tmp').resolve() / ('ai-harness-install-' + str(os.getuid()) + '-' + name + '.lock')
+        with lock.open('a') as stream:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            different_tmp = self.base / 'different tmp'
+            different_tmp.mkdir()
+            result = self.run_install(success=False, extra={'TMPDIR': str(different_tmp), 'CODEX_HOME': str(self.home / 'other-codex')})
+            self.assertIn('Another install', result.stderr)
+            self.assertFalse(self.codex.exists())
+
+    def test_unsupported_skill_discovery_root_rejected_before_writes(self):
+        result = self.run_install(success=False, extra={'AGENTS_SKILLS_HOME': str(self.base / 'unseen-skills')})
+        self.assertIn('native discovery root', result.stderr)
+        self.assertFalse(self.home.exists())
+
+    def test_source_change_during_snapshot_is_not_published(self):
+        script = '''
+import importlib.util, pathlib, sys
+source = pathlib.Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location('installer', source / 'scripts/install-codex.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+original = module.shutil.copytree
+def changed(src, dst, *args, **kwargs):
+    if pathlib.Path(src) == source / 'codex':
+        rules = pathlib.Path(src) / 'AGENTS.md'
+        rules.write_text(rules.read_text() + '\\nSynthetic concurrent change.\\n')
+    return original(src, dst, *args, **kwargs)
+module.shutil.copytree = changed
+sys.argv = ['install-codex.py']
+module.main()
+'''
+        result = subprocess.run([sys.executable, '-c', script, str(self.repo)], env=self.env, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('changed while taking its snapshot', result.stderr)
+        self.assertFalse(self.codex.exists())
+
+    def test_snapshot_survives_checkout_removal_and_ignores_bytecode(self):
+        ignored = self.repo / 'codex/cache.pyc'
+        ignored.mkdir()
+        (ignored / 'not-bytecode.txt').write_text('ignored')
+        self.run_install()
+        release = self.codex / 'harness/releases' / self.manifest()['release']
+        self.assertFalse((release / 'cache.pyc').exists())
+        moved = self.base / 'new checkout'
+        self.repo.rename(moved)
+        self.repo = moved
+        self.run_install()
+        shutil.rmtree(self.repo)
+        self.assertTrue((self.skills / 'spec/SKILL.md').is_file())
+        self.assertTrue((self.codex / 'agents/planner.toml').is_file())
+
+    def test_targets_isolate_clients_and_all_rejects_codex_only_options(self):
+        env = dict(self.env, CLAUDE_HOME=str(self.home / '.claude'))
+        for option, success in [('--uninstall', False), ('--dry-run', True)]:
+            result = subprocess.run(['bash', str(self.repo / 'install.sh'), '--target', 'all', option], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
+            self.assertFalse(self.home.exists())
+        self.run_install()
+        before = {p: p.read_bytes() for p in [self.codex / 'hooks.json', self.codex / 'AGENTS.md', self.codex / 'harness/manifest.json']}
+        subprocess.run(['bash', str(self.repo / 'install.sh'), '--target', 'claude'], env=env, capture_output=True, text=True, check=True)
+        for path, content in before.items():
+            self.assertEqual(path.read_bytes(), content)
+        subprocess.run(['bash', str(self.repo / 'install.sh'), '--target', 'all'], env=env, capture_output=True, text=True, check=True)
+        self.assertTrue((self.home / '.claude/CLAUDE.md').is_file())
+        self.assertTrue((self.codex / 'harness/manifest.json').is_file())
 
 
 unittest.main()

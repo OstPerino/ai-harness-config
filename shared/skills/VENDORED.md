@@ -8,4 +8,4 @@
 
 Текст лицензии — `LICENSE-superpowers`.
 
-Обновление: `diff -r {{CLIENT_HOME}}/plugins/cache/claude-plugins-official/superpowers/<версия>/skills/<скилл> {{REPO_SKILLS}}<скилл>`, перенести изменения, повторить замены ссылок, `sh tests/lint-harness.sh`.
+{{VENDORED_UPDATE}}

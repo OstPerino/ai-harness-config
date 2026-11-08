@@ -32,16 +32,14 @@ in every session that loads it.
   apply it wrongly at the edges.
 - No "elite / 15+ years / world-class", no emoji, no ALL CAPS beyond a single
   hard gate.
-- Model policy: `opus` for reasoning, plans and review; `sonnet` for writing
-  code and tests. Aliases only.
-- Reviewers (`*-reviewer`) never get Edit/Write; lint enforces it. `planner`
-  keeps Write for the files its brief names.
+{{MODEL_POLICY}}
+{{REVIEWER_TOOLS}}
 - Do not duplicate a rule that lives in `{{REPO_RULES}}` or a skill the agent
   already loads; reference it.
 
 ## Hard rules
 
-- Edit only files under `claude/` and the paths the brief names. Never touch
+{{HARNESS_EDIT_SCOPE}} Never touch
   `{{CLIENT_HOME}}` directly: it is installed from this repo.
 - Do not copy third-party text verbatim into the repo (`_attic/`,
   `everything-claude-code/` are inputs, not sources to paste); rewrite as our

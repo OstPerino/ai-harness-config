@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -68,27 +69,82 @@ def tree_hash(source):
     for path in sorted(source.rglob('*')):
         if path.is_symlink():
             fail('Release source contains a symlink: ' + str(path))
-        if '__pycache__' in path.parts or path.suffix == '.pyc':
+        if any(part == '__pycache__' or part.endswith('.pyc') for part in path.relative_to(source).parts):
             continue
         if path.is_file():
             digest.update(str(path.relative_to(source)).encode() + b'\0' + path.read_bytes() + b'\0')
     return digest.hexdigest()[:24]
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--uninstall', action='store_true')
-    parser.add_argument('--restore')
-    parser.add_argument('--release')
-    args = parser.parse_args()
-    if sum([args.uninstall, bool(args.restore), bool(args.release)]) > 1:
-        fail('Choose one operation')
-    home = Path(os.environ.get('CODEX_HOME', Path.home() / '.codex')).absolute()
-    skills = Path(os.environ.get('AGENTS_SKILLS_HOME', Path.home() / '.agents/skills')).absolute()
+def no_symlink_parents(path):
+    for parent in (path, *path.parents):
+        if parent.is_symlink():
+            fail('Refusing symlinked installation path: ' + str(parent))
+
+
+def restore(args, home, skills):
     state = home / 'harness'
+    backup = Path(os.path.abspath(args.restore))
+    if backup.parent != state / 'backups':
+        fail('Restore requires a backup directory from this Codex home')
+    no_symlink_parents(backup / 'journal.json')
+    journal = json.loads((backup / 'journal.json').read_text())
+    if not isinstance(journal, list):
+        fail('Invalid restore journal')
+    allowed = {home / n for n in ('config.toml', 'hooks.json', 'AGENTS.md', 'harness/manifest.json')}
+    seen = set()
+    for item in journal:
+        if not isinstance(item, dict) or not isinstance(item.get('path'), str):
+            fail('Invalid restore entry')
+        path = Path(item['path'])
+        if str(path) != os.path.abspath(path) or path in seen or (path not in allowed and path.parent not in (home / 'agents', skills)):
+            fail('Invalid restore destination')
+        seen.add(path)
+        no_symlink_parents(path.parent)
+        if path.exists() and path.is_dir() and not path.is_symlink():
+            fail('Restore destination is a directory: ' + str(path))
+        if item.get('kind') == 'file':
+            copy = item.get('copy')
+            if not isinstance(copy, str) or not copy.isdigit():
+                fail('Invalid restore copy')
+            no_symlink_parents(backup / copy)
+            if not (backup / copy).is_file():
+                fail('Missing restore copy')
+        elif item.get('kind') == 'symlink':
+            if not isinstance(item.get('target'), str) or not item['target'] or '\x00' in item['target']:
+                fail('Invalid restore symlink')
+        elif item.get('kind') != 'absent':
+            fail('Invalid restore kind')
+    if args.dry_run:
+        print('restore:', backup)
+        return
+    for item in reversed(journal):
+        path = Path(item['path'])
+        if path.is_symlink() or path.is_file():
+            path.unlink()
+        if item['kind'] == 'file':
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(backup / item['copy'], path)
+        elif item['kind'] == 'symlink':
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.symlink_to(item['target'])
+    print('restored:', backup)
+
+
+def install(args, home, skills, staging):
+    state = home / 'harness'
+    for path in (home, home / 'agents', state / 'releases', state / 'backups', skills):
+        no_symlink_parents(path)
+    if (state / 'install.lock').exists():
+        fail('Interrupted operation owns ' + str(state / 'install.lock'))
+    if args.restore:
+        restore(args, home, skills)
+        return
     manifest_path = state / 'manifest.json'
+    no_symlink_parents(manifest_path)
     old = json.loads(read(manifest_path, '{}'))
+    if not isinstance(old, dict):
+        fail('Invalid manifest')
     if args.uninstall and not old:
         print('codex: not installed')
         return
@@ -105,12 +161,14 @@ def main():
     config, config_block = strip_block(original_config, CONFIG_MARKERS)
     rules, rules_block = strip_block(read(rules_path), RULE_MARKERS)
     for field, block in [('config_block', config_block), ('rules_block', rules_block)]:
-        if block and block != old.get(field):
+        if block != old.get(field, ''):
             fail('Managed block was modified or has no owner: ' + field)
     hooks = json.loads(read(hooks_path, '{}'))
     if not isinstance(hooks, dict) or not isinstance(hooks.get('hooks', {}), dict):
         fail('Invalid hooks.json')
     previous_hooks = old.get('hooks', {})
+    if any(not isinstance(entries, list) for entries in previous_hooks.values()):
+        fail('Invalid manifest hooks')
     for event, entries in hooks.get('hooks', {}).items():
         if not isinstance(entries, list):
             fail('Invalid hook groups: ' + event)
@@ -123,31 +181,6 @@ def main():
         if not isinstance(target, str) or not Path(target).resolve().is_relative_to((state / 'releases').resolve()):
             fail('Owned target is outside releases')
         old_links[path] = target
-    if args.restore:
-        backup = Path(args.restore).absolute()
-        if backup.parent != state / 'backups':
-            fail('Restore requires a backup directory from this Codex home')
-        journal = json.loads((backup / 'journal.json').read_text())
-        allowed = set(map(str, [config_path, hooks_path, rules_path, manifest_path]))
-        for item in journal:
-            path = Path(item['path'])
-            if str(path) not in allowed and not (path.parent in (home / 'agents', skills) and path.name not in ('', '.', '..')):
-                fail('Invalid restore destination')
-        if args.dry_run:
-            print('restore:', backup)
-            return
-        for item in reversed(journal):
-            path = Path(item['path'])
-            if path.is_symlink() or path.is_file():
-                path.unlink()
-            if item['kind'] == 'file':
-                path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(backup / item['copy'], path)
-            elif item['kind'] == 'symlink':
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.symlink_to(item['target'])
-        print('restored:', backup)
-        return
     desired = {}
     release_id = None
     release_source = None
@@ -162,7 +195,13 @@ def main():
             if not release_source.is_dir() or tree_hash(release_source) != args.release:
                 fail('Release missing or modified')
             release_id = args.release
+        snapshot = staging / 'content'
+        shutil.copytree(release_source, snapshot, symlinks=True, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        if tree_hash(snapshot) != release_id:
+            fail('Release source changed while taking its snapshot; retry after edits finish')
+        release_source = snapshot
         release = state / 'releases' / release_id
+        no_symlink_parents(release)
         if release.exists() and tree_hash(release) != release_id:
             fail('Existing release was modified')
         for path in sorted((release_source / 'agents').glob('*.toml')):
@@ -265,6 +304,8 @@ def main():
             stage = Path(tempfile.mkdtemp(prefix='.release-', dir=state))
             try:
                 shutil.copytree(release_source, stage / 'content', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+                if tree_hash(stage / 'content') != release_id:
+                    fail('Staged release hash differs from its content id')
                 (state / 'releases').mkdir(exist_ok=True)
                 os.replace(stage / 'content', release)
             finally:
@@ -311,9 +352,40 @@ def re_release(value):
     return len(value) == 24 and all(c in '0123456789abcdef' for c in value)
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--uninstall', action='store_true')
+    parser.add_argument('--restore')
+    parser.add_argument('--release')
+    args = parser.parse_args()
+    if sum([args.uninstall, bool(args.restore), bool(args.release)]) > 1:
+        fail('Choose one operation')
+    home = Path(os.path.abspath(os.environ.get('CODEX_HOME', Path.home() / '.codex')))
+    skills = Path(os.path.abspath(os.environ.get('AGENTS_SKILLS_HOME', Path.home() / '.agents/skills')))
+    if skills != Path.home() / '.agents/skills':
+        fail('AGENTS_SKILLS_HOME must be the native discovery root HOME/.agents/skills; use an isolated HOME for a separate installation')
+    locks = sorted({hashlib.sha256(str(p).encode()).hexdigest() for p in (home, skills)})
+    descriptors = []
+    try:
+        for name in locks:
+            path = Path('/tmp').resolve() / ('ai-harness-install-' + str(os.getuid()) + '-' + name + '.lock')
+            fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+            descriptors.append(fd)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                fail('Another install owns this Codex home or skills directory')
+        with tempfile.TemporaryDirectory(prefix='harness-plan-') as temp:
+            install(args, home, skills, Path(temp))
+    finally:
+        for fd in descriptors:
+            os.close(fd)
+
+
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, TypeError, KeyError, AttributeError, subprocess.CalledProcessError) as error:
         print('install-codex:', error, file=sys.stderr)
         raise SystemExit(1)

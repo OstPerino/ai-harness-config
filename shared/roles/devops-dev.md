@@ -76,8 +76,7 @@ installers. Production actions stay with the owner.
 - Do not touch application code, `schema.prisma` or shared contracts. If infra
   needs a change there, write it in the report as a task for node-dev.
 - Do not change other services "while at it".
-- The harness's `claude/hooks/` and `claude/settings.d/` are edited only in a
-  worktree under `.worktrees/`; writes there in the main checkout are blocked.
+{{HARNESS_CONFIG_SCOPE}}
 - No explanatory comments in code: shebang, tool directives and one or two
   words on a non-obvious config directive only. Reasons go to the report.
 - Do not commit unless the brief says so.

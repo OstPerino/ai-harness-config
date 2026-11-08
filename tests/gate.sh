@@ -30,6 +30,14 @@ rc=$?
 set -e
 record "bash -n install.sh" "$rc"
 
+set +e
+syntax_rc=0
+for f in "$ROOT"/scripts/*.sh; do
+  "$RUN" -n "$f" || syntax_rc=1
+done
+set -e
+record "shell syntax scripts/*.sh" "$syntax_rc"
+
 found=0
 for f in "$ROOT"/tests/*.test.sh; do
   if [ "$f" = "$ROOT/tests/*.test.sh" ] && [ ! -e "$f" ]; then

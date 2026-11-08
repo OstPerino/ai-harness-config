@@ -21,4 +21,4 @@
 
 Closes <#N, #M | —>
 
-<(если Атрибуция: да) 🤖 Generated with [Codex](https://claude.com/claude-code)>
+<(если Атрибуция: да) 🤖 Generated with [Codex](https://openai.com/codex/)>

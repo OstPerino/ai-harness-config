@@ -60,34 +60,76 @@ for client in claude codex; do
       cat "$ROOT/adapters/codex/instructions.md" >>"$dest"
     fi
   done <"$tmp/sources"
+  if [ -d "$ROOT/adapters/$client/skills" ]; then
+    find "$ROOT/adapters/$client/skills" -type f | LC_ALL=C sort >"$tmp/overrides"
+    while IFS= read -r src; do
+      rel=${src#"$ROOT/adapters/$client/skills/"}
+      dest=$tmp/build/$client/skills/$rel
+      mkdir -p "$(dirname "$dest")"
+      case $src in
+        *.md) render "$src" "$dest" ;;
+        *) cp -p "$src" "$dest" ;;
+      esac
+    done <"$tmp/overrides"
+  fi
 done
 mkdir -p "$tmp/build/claude/hooks" "$tmp/build/codex/legacy"
 for src in "$ROOT"/shared/security/*.sh; do
   cp -p "$src" "$tmp/build/claude/hooks/"
   cp -p "$src" "$tmp/build/codex/legacy/"
 done
-rm -f "$tmp/build/codex/skills/harness-stats/stats.sh"
-if [ -d "$ROOT/adapters/codex/skills" ]; then cp -R "$ROOT/adapters/codex/skills/." "$tmp/build/codex/skills/"; fi
 if [ -d "$ROOT/adapters/codex/hooks" ]; then cp -R "$ROOT/adapters/codex/hooks" "$tmp/build/codex/"; fi
 for name in learn harness-stats Telegram; do
   mkdir -p "$tmp/build/codex/skills/$name/agents"
   printf 'policy:\n  allow_implicit_invocation: false\n' >"$tmp/build/codex/skills/$name/agents/openai.yaml"
 done
 find "$tmp/build" -type f | sed "s|^$tmp/build/||" | LC_ALL=C sort >"$tmp/list"
-errors=0
-while IFS= read -r rel; do
-  if ! cmp -s "$tmp/build/$rel" "$out/$rel"; then
-    if [ "$mode" = check ]; then
-      printf 'render: differs %s\n' "$rel" >&2
-      errors=$((errors + 1))
-    else
-      mkdir -p "$(dirname "$out/$rel")"
-      cp -p "$tmp/build/$rel" "$out/$rel"
-    fi
-  fi
-done <"$tmp/list"
-if [ "$mode" = write ]; then cp "$tmp/list" "$out/.generated-files"; else
-  cmp -s "$tmp/list" "$out/.generated-files" || { printf 'render: generated file list differs\n' >&2; errors=$((errors + 1)); }
-fi
-[ "$errors" -eq 0 ] || exit 1
+python3 - "$tmp" "$out" "$mode" <<'PY'
+from pathlib import Path
+import os, shutil, sys, tempfile
+temp, out = map(Path, sys.argv[1:3])
+out = out.resolve()
+mode = sys.argv[3]
+manifest = out / '.generated-files'
+if manifest.is_symlink():
+    raise SystemExit('render: symlinked generated file manifest')
+current = (temp / 'list').read_text().splitlines()
+previous = manifest.read_text().splitlines() if manifest.exists() else []
+for rel in set(previous + current):
+    path = Path(rel)
+    if path.is_absolute() or '..' in path.parts or len(path.parts) < 2 or path.parts[0] not in ('claude', 'codex'):
+        raise SystemExit('render: invalid generated path: ' + rel)
+    dest = out / path
+    if any(p.is_symlink() for p in (dest, *dest.parents) if p != out.parent):
+        raise SystemExit('render: symlink in output path: ' + rel)
+stale = sorted(set(previous) - set(current))
+different = [rel for rel in current if not (out / rel).is_file() or (out / rel).read_bytes() != (temp / 'build' / rel).read_bytes()]
+if mode == 'check':
+    for rel in different + stale:
+        print('render: differs ' + rel, file=sys.stderr)
+    if different or stale or not manifest.exists() or manifest.read_bytes() != (temp / 'list').read_bytes():
+        raise SystemExit('render: generated files need rebuilding')
+else:
+    for rel in stale:
+        path = out / rel
+        path.unlink(missing_ok=True)
+        parent = path.parent
+        while parent != out / Path(rel).parts[0]:
+            try:
+                parent.rmdir()
+            except (FileNotFoundError, OSError):
+                break
+            parent = parent.parent
+    for rel in different:
+        dest = out / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(temp / 'build' / rel, dest)
+    fd, pending = tempfile.mkstemp(prefix='.generated-', dir=out)
+    os.close(fd)
+    try:
+        shutil.copy2(temp / 'list', pending)
+        os.replace(pending, manifest)
+    finally:
+        Path(pending).unlink(missing_ok=True)
+PY
 printf 'render: %s ok\n' "$mode"

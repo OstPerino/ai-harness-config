@@ -4,7 +4,7 @@ ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 sh "$ROOT/scripts/render.sh" --check
 python3 - "$ROOT" <<'PY'
 from pathlib import Path
-import ast, json, sys, tomllib
+import ast, json, re, sys, tomllib
 root=Path(sys.argv[1])
 roles=list((root/'codex/agents').glob('*.toml'))
 assert len(roles)==13
@@ -17,7 +17,17 @@ for p in (root/'codex/skills').glob('*/SKILL.md'):
  s=p.read_text()
  assert 'Agent(subagent_type:' not in s and '{{' not in s, p
  assert 'disable-model-invocation:' not in s, p
+ assert 'AskUserQuestion' not in s and '$ARGUMENTS' not in s, p
  assert s.startswith('---\nname: '), p
+for p in (root/'codex/skills').rglob('*.md'):
+ text=re.sub(r'```.*?```', '', p.read_text(), flags=re.S)
+ for target in re.findall(r'\]\(([^\s)]+)\)', text):
+  if target.startswith(('http:', 'https:', '#')) or '<' in target:
+   continue
+  assert (p.parent / target.split('#')[0]).exists(), (p, target)
+assert 'https://claude.com' not in (root/'codex/AGENTS.md').read_text()
+role=tomllib.loads((root/'codex/agents/harness-dev.toml').read_text())
+assert '`opus`' not in role['developer_instructions'] and '`sonnet`' not in role['developer_instructions']
 for name in ['learn','harness-stats','Telegram']:
  assert 'allow_implicit_invocation: false' in (root/'codex/skills'/name/'agents/openai.yaml').read_text()
 assert not (root/'codex/skills/harness-stats/stats.sh').exists()

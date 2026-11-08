@@ -8,4 +8,4 @@
 
 Текст лицензии — `LICENSE-superpowers`.
 
-Обновление: `diff -r ~/.codex/plugins/cache/claude-plugins-official/superpowers/<версия>/skills/<скилл> codex/skills/<скилл>`, перенести изменения, повторить замены ссылок, `sh tests/lint-harness.sh`.
+Обновление: получить и проверить obra/superpowers нужной версии в отдельном каталоге, сравнить с `shared/skills/<скилл>`, сохранить MIT и сведения об источнике. Проверить изменения исполняемых файлов, перенести согласованные правки, выполнить render и gate. Каталог плагинов Claude не требуется.

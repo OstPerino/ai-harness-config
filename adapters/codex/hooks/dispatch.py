@@ -37,7 +37,7 @@ def protected(path):
 
 def run_legacy(name, event):
     env = dict(os.environ, CLAUDE_PROJECT_DIR=str(event.get('project_root', event['cwd'])))
-    result = subprocess.run(['sh', str(BASE / 'legacy' / name)], input=json.dumps(event), text=True, capture_output=True, env=env)
+    result = subprocess.run(['sh', str(BASE / 'legacy' / name)], input=json.dumps(event), text=True, capture_output=True, env=env, timeout=3)
     if result.returncode:
         deny((result.stderr or result.stdout or name + ' failed').strip())
     return result.stdout
@@ -69,11 +69,8 @@ def main():
     if not isinstance(cwd_value, str) or not Path(cwd_value).is_absolute():
         raise ValueError('missing absolute cwd')
     cwd = Path(cwd_value).resolve()
-    root = cwd
-    for p in (cwd, *cwd.parents):
-        if (p / '.git').exists():
-            root = p
-            break
+    repository = subprocess.run(['git', '-C', str(cwd), 'rev-parse', '--show-toplevel'], text=True, capture_output=True, timeout=2)
+    root = Path(repository.stdout.strip()).resolve() if repository.returncode == 0 else cwd
     event['project_root'] = str(root)
     if phase == 'session':
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(root))
@@ -85,6 +82,15 @@ def main():
     data = event.get('tool_input')
     if not isinstance(tool, str) or not isinstance(data, dict):
         raise ValueError('missing tool_name/tool_input')
+    tool = {'exec_command': 'Bash', 'shell_command': 'Bash', 'shell': 'Bash'}.get(tool, tool)
+    if tool == 'Bash':
+        data = dict(data)
+        command = data.get('command', data.get('cmd'))
+        if isinstance(command, list) and all(isinstance(part, str) for part in command):
+            import shlex
+            command = shlex.join(command)
+        data['command'] = command
+        event = dict(event, tool_name=tool, tool_input=data)
     paths = []
     if tool in ('apply_patch', 'Edit', 'Write', 'MultiEdit'):
         if 'command' in data:
@@ -97,8 +103,11 @@ def main():
         if not paths:
             return
         seen = set()
+        failures = []
         for value in paths:
             path = resolved(value, cwd)
+            if path.suffix not in ('.rs', '.ts', '.tsx', '.mts', '.cts', '.vue') and path.name not in ('Cargo.toml', 'tsconfig.json'):
+                continue
             marker = 'Cargo.toml' if path.suffix == '.rs' or path.name == 'Cargo.toml' else 'tsconfig.json'
             project = None
             for parent in (path.parent, *path.parents):
@@ -111,10 +120,12 @@ def main():
             if project is None or key in seen:
                 continue
             seen.add(key)
-            if path.is_file():
-                result = subprocess.run(['sh', str(BASE / 'legacy/typecheck.sh')], input=json.dumps({'tool_input': {'file_path': str(path)}}), text=True, capture_output=True)
-                if result.returncode:
-                    print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': result.stderr or 'typecheck failed'}}))
+            target = path if path.is_file() else project / marker
+            result = subprocess.run(['sh', str(BASE / 'legacy/typecheck.sh')], input=json.dumps({'tool_input': {'file_path': str(target)}}), text=True, capture_output=True, timeout=280)
+            if result.returncode:
+                failures.append(result.stderr or 'typecheck failed')
+        if failures:
+            print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': '\n'.join(failures)}}))
         return
     if phase != 'pre':
         raise ValueError('unknown hook phase')
@@ -133,24 +144,31 @@ def main():
             deny('Command references a protected credential path')
         if re.search(r'(\.codex/(?:config\.toml|hooks|agents|AGENTS\.md|harness/(?:releases|manifest))|\.agents/skills)', command) and re.search(r'(>|\b(?:tee|cp|mv|rm|install|ln|python\w*|node|perl|ruby)\b|\bsed\s+-i)', command):
             deny('Command may modify installed harness configuration')
+        expanded = os.path.expandvars(command).replace('~/', str(Path.home()) + '/')
+        installed = [str(Path(os.environ.get('CODEX_HOME', Path.home() / '.codex')).resolve()), str(Path(os.environ.get('AGENTS_SKILLS_HOME', Path.home() / '.agents/skills')).resolve())]
+        if any(path in expanded for path in installed) and re.search(r'(>|\b(?:tee|cp|mv|rm|install|ln|python\w*|node|perl|ruby)\b|\bsed\s+-i)', command):
+            deny('Command may modify configured harness paths')
         for script in ('guard-net.sh', 'guard-rm.sh', 'guard-write.sh'):
             run_legacy(script, shell)
     if tool.startswith('mcp__jira__'):
         output = run_legacy('jira-write-guard.sh', event)
         if output:
+            decision = json.loads(output).get('hookSpecificOutput', {}).get('permissionDecision')
+            if decision == 'ask':
+                deny('This Jira write needs approval; Codex PreToolUse does not support ask. Configure a reviewed project exception before using this operation.')
             print(output, end='')
     if tool.startswith(('mcp__telegram__', 'mcp__telegram-mcp__')):
         name = tool.split('__')[-1]
         if re.match(r'(delete|ban|leave|block|set_privacy|update_profile|edit_admin)', name):
             deny('Destructive Telegram operation is disabled')
         if re.match(r'(send|reply|forward|edit|save_draft)', name):
-            print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'ask', 'permissionDecisionReason': 'Confirm recipient and exact message text'}}))
+            deny('Telegram writes are paused; Codex PreToolUse cannot request approval. A reviewed integration is required before sending messages.')
 
 
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, OSError, KeyError, TypeError, IndexError) as error:
+    except (ValueError, OSError, KeyError, TypeError, IndexError, subprocess.TimeoutExpired) as error:
         if len(sys.argv) > 1 and sys.argv[1] == 'pre':
             deny('Harness hook cannot validate input: ' + str(error))
         print('harness hook: ' + str(error), file=sys.stderr)

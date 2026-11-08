@@ -21,4 +21,4 @@
 
 Closes <#N, #M | —>
 
-<(если Атрибуция: да) 🤖 Generated with [{{CLIENT}}](https://claude.com/claude-code)>
+<(если Атрибуция: да) 🤖 Generated with [{{CLIENT}}]({{CLIENT_URL}})>
