@@ -69,6 +69,16 @@ class HookCases(unittest.TestCase):
             result = self.hook(tool='exec_command', data={'cmd': 'printf synthetic > ' + shlex.quote(str(path))})
             self.assertEqual(self.decision(result), 'deny')
 
+    def test_configured_paths_resolve_shell_aliases(self):
+        target = self.home / 'custom client'
+        target.mkdir()
+        self.env['CODEX_HOME'] = str(target)
+        alias = self.project / 'client-link'
+        alias.symlink_to(target, target_is_directory=True)
+        for path in (alias / 'hooks.json', Path('client-link/hooks.json')):
+            result = self.hook(tool='exec_command', data={'cmd': 'printf synthetic > ' + shlex.quote(str(path))})
+            self.assertEqual(self.decision(result), 'deny')
+
     def test_session_context_ordinary_and_symlink(self):
         directory = self.project / '.claude/context'
         directory.mkdir(parents=True)
