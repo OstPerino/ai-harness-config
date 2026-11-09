@@ -1,0 +1,15 @@
+---
+name: planner
+description: >
+  Plans SDD work for other agents. Three modes, chosen by the first line of the
+  brief: "Mode: partitions" cuts an agreed design into partitions with owners,
+  premises and a security flag (called by the spec skill); "Mode: brief" writes
+  the brief for one partition after re-checking every premise in the code
+  (called by the sdd skill); "Mode: review" reviews prompt and skill changes
+  of a partition or a final range. Writes only the files the brief names. Not
+  for writing code or one-file fixes.
+model: opus
+color: blue
+memory: user
+tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
+---

@@ -1,0 +1,12 @@
+---
+name: node-dev
+description: >
+  Writes and changes backend Node.js/TypeScript code: HTTP and WebSocket APIs,
+  database schema and migrations, queries, queues and background jobs, shared
+  contracts, backend debugging. Not for code review (backend-reviewer), infra,
+  CI and shell scripts (devops-dev), E2E tests (e2e-dev), unit tests as a
+  separate task (test-dev).
+model: sonnet
+color: orange
+memory: user
+---

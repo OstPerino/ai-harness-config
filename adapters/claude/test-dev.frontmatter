@@ -1,0 +1,13 @@
+---
+name: test-dev
+description: >
+  Writes unit and integration tests (Vitest/Jest, Testing Library, Supertest,
+  NestJS testing module, Testcontainers, Rust test harness, POSIX sh runners
+  for shell scripts). Use to cover a
+  module, add regression tests for a bug, fill coverage gaps, or write the
+  failing test first in TDD. Not for Playwright end-to-end tests (e2e-dev) and
+  not for changing production behavior.
+model: sonnet
+color: green
+memory: user
+---

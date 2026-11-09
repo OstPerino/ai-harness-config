@@ -21,7 +21,9 @@ said by the owner or approved by them.
 
 <HARD-GATE>
 Until the owner approves the written spec: no code, no briefs, no worktrees, no
-issues in the tracker, no `sdd`. Reading code is allowed and expected.
+issues in the tracker, no `sdd`. Reading code is allowed and expected. The gate
+holds only for a feature: the solo and one-partition exits in §2 leave this
+skill before it applies.
 </HARD-GATE>
 
 ## 1. Load the project
@@ -39,13 +41,29 @@ issues in the tracker, no `sdd`. Reading code is allowed and expected.
 
 ## 2. Size it, out loud
 
-- **One partition** — the issue body already says what to change, one layer,
-  one executor delivery. Say "это одна партия — иду через issue-start" and
-  hand over to `issue-start`. Stop here.
-- **Feature** — several partitions, or non-trivial decisions. Say "это фича —
-  пишу спеку" so the owner can override. Continue.
+Read enough code to answer two questions: is the "how" already decided, and
+how much does it touch. Then pick one and say it in one line, so the owner can
+override:
 
-When in doubt, it's a feature.
+- **Solo** — every one holds:
+  - the design is already fixed: a backend handoff, an issue or the existing
+    patterns of the repo answer "how", down to endpoints and components;
+  - one layer, roughly up to 10–15 files;
+  - no independent chunks that would really gain from parallel executors;
+  - no high-risk area: auth and access checks, money, data migrations.
+
+  Say "делаю сам, без спеки: <почему одной фразой>" and leave this skill. Write
+  the code yourself, run the project's gate, then one pass of the layer's
+  reviewer from `## SDD` and one fix round. No spec, no planner, no briefs.
+- **One partition** — a tracker issue already says what to change, one layer,
+  and the owner wants it delivered by an executor. Say "это одна партия — иду
+  через issue-start" and hand over to `issue-start`. Stop here.
+- **Feature** — any of: a real choice between approaches, several layers or
+  repositories, a large volume that splits into parallel chunks, a high-risk
+  area. Say "это фича — пишу спеку". Continue.
+
+Between solo and feature, the deciding question is whether the design still
+has to be agreed with the owner. Already agreed elsewhere → solo.
 
 ## 3. Write back your understanding
 

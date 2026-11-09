@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "${1:-}" = --target ]; then
+  [ "$#" -ge 2 ] || { echo "install: missing target" >&2; exit 1; }
+  target=$2
+  shift 2
+  case "$target" in
+    codex) exec sh "$(dirname "${BASH_SOURCE[0]}")/scripts/install-codex.sh" "$@" ;;
+    claude) ;;
+    all)
+      case "${1:-}" in
+        ''|--dry-run) ;;
+        -h|--help) exec bash "${BASH_SOURCE[0]}" --help ;;
+        *) echo 'install: all accepts only --dry-run' >&2; exit 1 ;;
+      esac
+      bash "${BASH_SOURCE[0]}" --target claude --dry-run >/dev/null
+      sh "$(dirname "${BASH_SOURCE[0]}")/scripts/install-codex.sh" "$@"
+      exec bash "${BASH_SOURCE[0]}" --target claude "$@"
+      ;;
+    *) echo "install: unknown target '$target'" >&2; exit 1 ;;
+  esac
+fi
+
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$REPO/claude"
 DEST="${CLAUDE_HOME:-$HOME/.claude}"
@@ -9,7 +30,9 @@ DRY_RUN=0
 
 usage() {
   cat <<EOF
-Usage: ./install.sh [--dry-run]
+Usage: ./install.sh [--target claude|codex|all] [--dry-run]
+Codex also accepts --uninstall, --release ID, --restore BACKUP.
+Default target remains claude. Codex requires Python 3.11+ (stdlib) and jq.
 
 Symlinks agents, skills, hooks and CLAUDE.md from $SRC into $DEST.
 Merges $SRC/settings.d/*.json into $DEST/settings.json; what it adds is recorded

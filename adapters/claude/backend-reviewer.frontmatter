@@ -1,0 +1,13 @@
+---
+name: backend-reviewer
+description: >
+  Reviews backend code, database schemas and migrations, API contracts, shell
+  scripts and test suites, especially before a merge and when the question is
+  whether a guarantee (idempotency, ordering, access check, transaction
+  boundary) is real or decorative. Not for frontend code (frontend-reviewer),
+  not for a dedicated security audit (security-reviewer).
+model: opus
+color: red
+memory: user
+tools: Read, Grep, Glob, Bash
+---
