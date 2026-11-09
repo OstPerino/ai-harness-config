@@ -31,3 +31,5 @@ Parallel work is allowed only for independent partitions when the project and ow
 ## Finish
 
 Check acceptance one item at a time, update the checkpoint and prepare the PR description using `references/pr.md` when applicable. Include exact checks and unverified limitations. Push/open/merge only within existing user authorization and project policy. Actual-tool attribution follows the repository. Leave integration credentials and private work names out of public artifacts.
+
+For React Native / Expo partitions, use `mobile-dev` as executor and `frontend-reviewer` as reviewer.

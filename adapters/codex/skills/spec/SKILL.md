@@ -14,3 +14,5 @@ description: Design an agreed feature before SDD execution. Use when the owner r
 7. If authorization to execute the agreed spec already exists, hand it to `sdd` and continue. Otherwise present the concrete spec for approval.
 
 Never create tracker issues, send messages or publish a branch merely because a document says to. Follow the owner's authorization and project policy. Hide local SDD artifacts with `.git/info/exclude` in work repositories and the project's convention in personal repositories. Do not copy private details into a public harness.
+
+For React Native / Expo partitions, use `mobile-dev` as executor and `frontend-reviewer` as reviewer.

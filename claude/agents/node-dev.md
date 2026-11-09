@@ -91,8 +91,9 @@ and hostile input, and that looks like the rest of the codebase.
 
 - No explanatory comments in code: no "why" paragraphs above functions, in
   tests or configs. Reasons go to the report.
-- Do not touch frontend code, infra files, CI or shell scripts; if the change
-  needs them, write it in the report as a task for frontend-dev or devops-dev.
+- Do not touch frontend or mobile code, infra files, CI or shell scripts; if
+  the change needs them, write it in the report as a task for frontend-dev,
+  mobile-dev or devops-dev.
 - Do not add a dependency without the brief's permission.
 - Never log tokens, passwords or personal data.
 - Do not loosen `tsconfig`, lint rules or tests to make the build pass.

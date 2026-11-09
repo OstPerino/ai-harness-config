@@ -6,7 +6,7 @@ description: >
   and reference search; checks framework conventions (Nuxt auto-imports and
   file routes, NestJS DI, Next.js file conventions) before deleting. Use for
   cleanup passes and dependency hygiene. Not for feature work or redesigns
-  (node-dev, frontend-dev), or test suites (test-dev).
+  (node-dev, frontend-dev, mobile-dev), or test suites (test-dev).
 model: sonnet
 color: orange
 memory: user

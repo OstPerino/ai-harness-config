@@ -63,7 +63,9 @@ owner the previous executor's context is lost.
 1. Ask one question: «Это рабочий репо или пет?» — and propose the answer from
    the path (`~/Job/*` → рабочий, otherwise пет).
 2. Detect the layers from the repo layout (apps/packages/crates/services) and
-   propose executor/reviewer per layer from the harness agents.
+   propose executor/reviewer per layer from the harness agents. An Expo /
+   React Native app is `mobile-dev` with `frontend-reviewer`, not
+   `frontend-dev`.
 3. Find the gate: `package.json` scripts, CI workflow, `Makefile`, `justfile`,
    a `tests/` runner script. Propose only commands whose tools are actually
    installed (`command -v`, devDependencies, lockfile) and that pass on the

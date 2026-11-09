@@ -80,8 +80,8 @@ def main():
 
             walk(data)
             roles = [p.stem for p in (ROOT / 'codex/agents').glob('*.toml')]
-            assert len(roles) == 13 and all(name + ': {' in '\n'.join(descriptions) for name in roles), 'custom roles absent from spawn tool'
-            print('CLI smoke: 13 roles, 17 skills, 3 untrusted hooks, disabled brainstorming, native instructions and fresh thread: ok')
+            assert len(roles) == 14 and all(name + ': {' in '\n'.join(descriptions) for name in roles), 'custom roles absent from spawn tool'
+            print('CLI smoke: 14 roles, 17 skills, 3 untrusted hooks, disabled brainstorming, native instructions and fresh thread: ok')
             print('Trusted hook execution, model turn, TUI quotas and laptop installation remain separate checks.')
 
 

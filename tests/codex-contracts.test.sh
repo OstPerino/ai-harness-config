@@ -7,7 +7,7 @@ from pathlib import Path
 import ast, json, re, sys, tomllib
 root=Path(sys.argv[1])
 roles=list((root/'codex/agents').glob('*.toml'))
-assert len(roles)==13
+assert len(roles)==14
 for p in roles:
  d=tomllib.loads(p.read_text())
  assert d['name']==p.stem and d['description'] and d['developer_instructions']

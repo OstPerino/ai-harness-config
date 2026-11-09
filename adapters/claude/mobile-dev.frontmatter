@@ -1,0 +1,12 @@
+---
+name: mobile-dev
+description: >
+  Writes and changes React Native / Expo mobile app code: screens, navigation,
+  state, native modules through config plugins, app lifecycle, permissions,
+  push, mobile performance and accessibility. Not for web frontend
+  (frontend-dev), code review (frontend-reviewer), backend or contracts
+  (node-dev), CI (devops-dev).
+model: sonnet
+color: cyan
+memory: user
+---

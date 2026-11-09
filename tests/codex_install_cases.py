@@ -126,7 +126,7 @@ class InstallerCases(unittest.TestCase):
         self.run_install()
         self.assertEqual((claude / 'settings.json').read_text(), 'unchanged')
         manifest = self.manifest()
-        self.assertEqual(len(manifest['links']), 30)
+        self.assertEqual(len(manifest['links']), 31)
         for item in manifest['links']:
             self.assertNotIn(str(self.repo), item['target'])
             self.assertTrue(Path(item['target']).exists())

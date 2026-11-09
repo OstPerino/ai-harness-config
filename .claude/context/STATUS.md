@@ -10,8 +10,11 @@ Claude symlinks. Старый `.worktrees/codex-adapter` с этим clone не 
 
 ### Реализовано
 
+- Влит origin/main с PR #4; mobile-dev и маршрутизация мобильных задач
+  перенесены в общие исходники и оба адаптера.
+
 - Shared core и отдельные адаптеры Claude/Codex, renderer, transactional
-  installer с release snapshots и backups. 13 ролей, 17 скиллов, 3 hook definitions.
+  installer с release snapshots и backups. 14 ролей, 17 скиллов, 3 hook definitions.
 - Исправлены ложные блокировки read-only диагностики и конфликт installer
   с нативными TOML-таблицами доверия. Изменения собственных настроек всё ещё
   обнаруживаются; чужие таблицы сохраняются вне managed markers.
@@ -32,7 +35,7 @@ Claude symlinks. Старый `.worktrees/codex-adapter` с этим clone не 
 - Один независимый проход ревью каждого нового объёма завершён, замечания
   исправлены с регрессионными проверками. Повторный проход не требуется.
 - Последняя полная проверка перед публикацией: sh/dash gate, render check,
-  CLI smoke с 13 ролями и 17 скиллами. Проверки выполнять в temp home.
+  CLI smoke с 14 ролями и 17 скиллами. Проверки выполнять в temp home.
 - Установка проводится только через `./install.sh --target codex`; release ID
   и исходный checkout хранятся в пользовательском harness manifest.
 - Конфигурация Claude сохранена; перенос Codex не меняет её.
@@ -44,9 +47,6 @@ Claude symlinks. Старый `.worktrees/codex-adapter` с этим clone не 
 
 ### Что осталось
 
-- В main появился mobile-dev и обновления существующих Claude roles/workflows
-  (PR #4). Перед merge синхронизировать адаптацию с этими изменениями и проверить
-  renderer parity; не затирать изменения main готовыми файлами feature-ветки.
 - Telegram отложен по решению владельца.
 - Запись Jira/hours, memory/AGENTS рабочих проектов, реальные harness-stats,
   compact/resume и установка на другой машине остаются отдельными проверками.

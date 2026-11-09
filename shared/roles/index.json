@@ -5,7 +5,7 @@
   },
   {
     "name": "build-fixer",
-    "description": "Gets a red build back to green with the smallest correct diff: TypeScript errors (tsc, vue-tsc, nuxi typecheck), lint errors, bundler/build failures, Rust cargo check/clippy errors. Use when typecheck, lint or build fail after a change, dependency upgrade or merge. Not for refactoring (refactor-cleaner), features or failing tests caused by wrong behavior (node-dev, frontend-dev; test-dev when the test itself is wrong)."
+    "description": "Gets a red build back to green with the smallest correct diff: TypeScript errors (tsc, vue-tsc, nuxi typecheck), lint errors, bundler/build failures, Rust cargo check/clippy errors. Use when typecheck, lint or build fail after a change, dependency upgrade or merge. Not for refactoring (refactor-cleaner), features or failing tests caused by wrong behavior (node-dev, frontend-dev, mobile-dev; test-dev when the test itself is wrong)."
   },
   {
     "name": "devops-dev",
@@ -17,15 +17,19 @@
   },
   {
     "name": "frontend-dev",
-    "description": "Writes and changes frontend code in React/Next.js and Vue/Nuxt: components, pages, state, data fetching, styling, accessibility, frontend performance and debugging. Not for code review (frontend-reviewer), Playwright E2E (e2e-dev), unit tests as a separate task (test-dev)."
+    "description": "Writes and changes frontend code in React/Next.js and Vue/Nuxt: components, pages, state, data fetching, styling, accessibility, frontend performance and debugging. Not for React Native / Expo apps (mobile-dev), code review (frontend-reviewer), Playwright E2E (e2e-dev), unit tests as a separate task (test-dev)."
   },
   {
     "name": "frontend-reviewer",
-    "description": "Reviews frontend code (React/Next.js, Vue/Nuxt), component design and frontend test suites, especially before a merge and when the question is whether a guarantee is real or decorative. Not for backend code (backend-reviewer), not for a dedicated security audit (security-reviewer)."
+    "description": "Reviews frontend code (React/Next.js, Vue/Nuxt, React Native/Expo), component design and frontend test suites, especially before a merge and when the question is whether a guarantee is real or decorative. Not for backend code (backend-reviewer), not for a dedicated security audit (security-reviewer)."
   },
   {
     "name": "harness-dev",
     "description": "Writes and edits the {{CLIENT}} harness itself: agent prompts ({{REPO_AGENTS}}*.md), skills ({{REPO_SKILLS}}*/SKILL.md and references), global rules ({{REPO_RULES}}). Use for an agent audit, a new skill, merging rules from other agents into ours, or tightening a description so it triggers. Not for shell hooks, install.sh or CI (devops-dev) and not for tests of shell scripts (test-dev)."
+  },
+  {
+    "name": "mobile-dev",
+    "description": "Writes and changes React Native / Expo mobile app code: screens, navigation, state, native modules through config plugins, app lifecycle, permissions, push, mobile performance and accessibility. Not for web frontend (frontend-dev), code review (frontend-reviewer), backend or contracts (node-dev), CI (devops-dev)."
   },
   {
     "name": "node-dev",
@@ -37,7 +41,7 @@
   },
   {
     "name": "refactor-cleaner",
-    "description": "Removes dead code, unused exports, files and dependencies, and consolidates duplicates — in small verified batches, without changing behavior. Uses knip and reference search; checks framework conventions (Nuxt auto-imports and file routes, NestJS DI, Next.js file conventions) before deleting. Use for cleanup passes and dependency hygiene. Not for feature work or redesigns (node-dev, frontend-dev), or test suites (test-dev)."
+    "description": "Removes dead code, unused exports, files and dependencies, and consolidates duplicates — in small verified batches, without changing behavior. Uses knip and reference search; checks framework conventions (Nuxt auto-imports and file routes, NestJS DI, Next.js file conventions) before deleting. Use for cleanup passes and dependency hygiene. Not for feature work or redesigns (node-dev, frontend-dev, mobile-dev), or test suites (test-dev)."
   },
   {
     "name": "security-reviewer",

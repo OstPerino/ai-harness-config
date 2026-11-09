@@ -6,6 +6,7 @@ claude/agents/e2e-dev.md
 claude/agents/frontend-dev.md
 claude/agents/frontend-reviewer.md
 claude/agents/harness-dev.md
+claude/agents/mobile-dev.md
 claude/agents/node-dev.md
 claude/agents/planner.md
 claude/agents/refactor-cleaner.md
@@ -73,6 +74,7 @@ codex/agents/e2e-dev.toml
 codex/agents/frontend-dev.toml
 codex/agents/frontend-reviewer.toml
 codex/agents/harness-dev.toml
+codex/agents/mobile-dev.toml
 codex/agents/node-dev.toml
 codex/agents/planner.toml
 codex/agents/refactor-cleaner.toml
