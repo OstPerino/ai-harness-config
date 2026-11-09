@@ -48,7 +48,8 @@ def main():
                 skills = request(3, 'skills/list', {'cwds': [str(ROOT)], 'forceReload': True})['data'][0]
                 assert not skills['errors'], 'skill discovery errors'
                 installed = [s for s in skills['skills'] if str(home / 'harness/releases') in s['path']]
-                assert len(installed) == 15, 'expected fifteen harness skills'
+                assert len(installed) == 17, 'expected seventeen harness skills'
+                assert {'frontend-design', 'ui-ux-pro-max'} <= {s['name'] for s in installed}, 'design skills missing'
                 conflicts = [s for s in skills['skills'] if s['name'] == 'brainstorming']
                 assert conflicts and all(not s['enabled'] for s in conflicts), 'conflicting workflow is still enabled'
                 thread = request(4, 'thread/start', {'cwd': str(ROOT), 'ephemeral': True})
@@ -80,7 +81,7 @@ def main():
             walk(data)
             roles = [p.stem for p in (ROOT / 'codex/agents').glob('*.toml')]
             assert len(roles) == 13 and all(name + ': {' in '\n'.join(descriptions) for name in roles), 'custom roles absent from spawn tool'
-            print('CLI smoke: 13 roles, 15 skills, 3 untrusted hooks, disabled brainstorming, native instructions and fresh thread: ok')
+            print('CLI smoke: 13 roles, 17 skills, 3 untrusted hooks, disabled brainstorming, native instructions and fresh thread: ok')
             print('Trusted hook execution, model turn, TUI quotas and laptop installation remain separate checks.')
 
 

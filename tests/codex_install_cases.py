@@ -2,6 +2,7 @@ import json
 import fcntl
 import hashlib
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -38,6 +39,28 @@ class InstallerCases(unittest.TestCase):
     def manifest(self):
         return json.loads((self.codex / 'harness/manifest.json').read_text())
 
+    def test_design_search_runs_from_release_after_source_removal(self):
+        self.run_install()
+        shutil.rmtree(self.repo)
+        script = self.skills / 'ui-ux-pro-max/scripts/search.py'
+        result = subprocess.run([sys.executable, str(script), 'form labels accessibility', '--domain', 'ux', '--json'], env=self.env, cwd=self.base, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(result.stdout)
+        self.assertTrue(data['results'])
+        self.assertIn('label', json.dumps(data['results']).lower())
+        self.assertFalse((self.base / 'design-system').exists())
+        for name in ('frontend-design', 'ui-ux-pro-max'):
+            self.assertTrue((self.skills / name / 'SKILL.md').is_file())
+            self.assertTrue((self.skills / name / 'LICENSE.txt').is_file())
+        result = subprocess.run([sys.executable, str(script), 'analytics dashboard', '--design-system', '--persist', '--project-name', 'Review Project', '--page', 'overview', '--output-dir', str(self.base), '--json'], env=self.env, cwd=self.base, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        files = json.loads(result.stdout)['persistence']['created_files']
+        self.assertEqual(len(files), 2)
+        for filename in files:
+            references = re.findall(r'`(design-system/[^`]+)`', Path(filename).read_text())
+            self.assertTrue(references)
+            for reference in references:
+                self.assertTrue((self.base / reference.replace('[page-name]', 'overview')).is_file(), reference)
 
     def test_native_trust_tables_inside_managed_block_survive_update(self):
         self.codex.mkdir(parents=True)
@@ -103,7 +126,7 @@ class InstallerCases(unittest.TestCase):
         self.run_install()
         self.assertEqual((claude / 'settings.json').read_text(), 'unchanged')
         manifest = self.manifest()
-        self.assertEqual(len(manifest['links']), 28)
+        self.assertEqual(len(manifest['links']), 30)
         for item in manifest['links']:
             self.assertNotIn(str(self.repo), item['target'])
             self.assertTrue(Path(item['target']).exists())
