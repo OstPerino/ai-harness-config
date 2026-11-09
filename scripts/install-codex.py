@@ -44,6 +44,22 @@ def add_block(text, body, markers):
     return text + ('' if not text or text.endswith('\n') else '\n') + markers[0] + '\n' + body.rstrip('\n') + '\n' + markers[1] + '\n'
 
 
+def strip_config_block(text, owned):
+    remaining, block = strip_block(text, CONFIG_MARKERS)
+    if block == owned:
+        return remaining
+    if owned and block:
+        prefix = ''.join(owned.splitlines(keepends=True)[:-1])
+        if block.startswith(prefix):
+            extra = ''.join(block[len(prefix):].splitlines(keepends=True)[:-1])
+            expected = tomllib.loads(owned)
+            additions = tomllib.loads(extra)
+            if extra.lstrip().startswith('[') and additions and not expected.keys() & additions.keys():
+                if tomllib.loads(block) == dict(expected, **additions):
+                    return text.replace(block, extra, 1)
+    fail('Managed block was modified or has no owner: config_block')
+
+
 def json_text(data):
     return json.dumps(data, ensure_ascii=False, indent=2) + '\n'
 
@@ -158,9 +174,9 @@ def install(args, home, skills, staging):
     config_path, hooks_path, rules_path = (home / n for n in ('config.toml', 'hooks.json', 'AGENTS.md'))
     original_config = read(config_path)
     tomllib.loads(original_config)
-    config, config_block = strip_block(original_config, CONFIG_MARKERS)
+    config = strip_config_block(original_config, old.get('config_block', ''))
     rules, rules_block = strip_block(read(rules_path), RULE_MARKERS)
-    for field, block in [('config_block', config_block), ('rules_block', rules_block)]:
+    for field, block in [('rules_block', rules_block)]:
         if block != old.get(field, ''):
             fail('Managed block was modified or has no owner: ' + field)
     hooks = json.loads(read(hooks_path, '{}'))

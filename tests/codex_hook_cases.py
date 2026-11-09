@@ -69,6 +69,71 @@ class HookCases(unittest.TestCase):
             result = self.hook(tool='exec_command', data={'cmd': 'printf synthetic > ' + shlex.quote(str(path))})
             self.assertEqual(self.decision(result), 'deny')
 
+    def test_read_only_python_can_inspect_installation(self):
+        programs = [
+            "from pathlib import Path; print((Path.home() / '.codex/hooks.json').read_text())",
+            "import json; from pathlib import Path; p=Path.home()/'.codex/hooks.json'; print(json.loads(p.read_text()).get('hooks'))",
+            "from pathlib import Path; print((Path.home()/'.codex/hooks.json').exists(), 3 > 2)",
+        ]
+        for program in programs:
+            with self.subTest(program=program):
+                for command in ('python3 -c ' + shlex.quote(program), "python3 - <<'PY'\n" + program + '\nPY'):
+                    self.assertIsNone(self.decision(self.hook(tool='Bash', data={'command': command})))
+
+    def test_read_commands_do_not_treat_arguments_as_writers(self):
+        for command in [
+            'cat ~/.codex/AGENTS.md; rg -n managed scripts/install-codex.py',
+            "rg -n 'install|rm|python' ~/.agents/skills/spec/SKILL.md",
+        ]:
+            with self.subTest(command=command):
+                self.assertIsNone(self.decision(self.hook(tool='Bash', data={'command': command})))
+        for command in [
+            'cat file > ~/.codex/AGENTS.md',
+            'cat ~/.codex/AGENTS.md; rm ~/.codex/hooks.json',
+            'rg --pre=python3 pattern ~/.codex/AGENTS.md',
+            'rg --hostname-bin=install-helper --hyperlink-format=file pattern ~/.codex/AGENTS.md',
+            'rg --hostname-bin install-helper --hyperlink-format=file pattern ~/.codex/AGENTS.md',
+            'cat $(python3 writer.py) ~/.codex/AGENTS.md',
+            'cat `python3 writer.py` ~/.codex/AGENTS.md',
+            'cat ~/.codex/AGENTS.md |& python3 writer.py',
+            'cat ~/.codex/AGENTS.md &| python3 writer.py',
+        ]:
+            with self.subTest(command=command):
+                self.assertEqual(self.decision(self.hook(tool='Bash', data={'command': command})), 'deny')
+
+    def test_python_mutation_and_opaque_execution_stay_blocked(self):
+        programs = [
+            "from pathlib import Path; (Path.home()/'.codex/hooks.json').write_text('{}')",
+            "from pathlib import Path; (Path.home()/'.codex/hooks.json').unlink()",
+            "from pathlib import Path; open(Path.home()/'.codex/hooks.json', 'w').write('{}')",
+            "from pathlib import Path; open(Path.home()/'.codex/hooks.json', **{'mode': 'w'})",
+            "from pathlib import Path; (Path.home()/'.codex/hooks.json').replace('/elsewhere')",
+            "import os; os.system('rm ~/.codex/hooks.json')",
+            "import os; os.kill(12345, 9); print('~/.codex/hooks.json')",
+            "exec(input()); print('~/.codex/hooks.json')",
+            "import arbitrary_plugin; print('~/.codex/hooks.json')",
+        ]
+        for program in programs:
+            with self.subTest(program=program):
+                self.assertEqual(self.decision(self.hook(tool='Bash', data={'command': 'python3 -c ' + shlex.quote(program)})), 'deny')
+        for command in ["python3 unknown.py ~/.codex/hooks.json", "python3 -c 'print(1)' > ~/.codex/hooks.json", "node -e 'anything()' ~/.codex/hooks.json"]:
+            self.assertEqual(self.decision(self.hook(tool='Bash', data={'command': command})), 'deny')
+
+    def test_read_only_codex_ipc_and_mutating_rpc(self):
+        program = (ROOT / 'tests/fixtures/read-only-codex-discovery.py').read_text()
+        command = "python3 - <<'PY'\n" + program + '\nPY'
+        self.assertIsNone(self.decision(self.hook(tool='Bash', data={'command': command})))
+        for changed in [
+            program.replace("'hooks/list'", "'hooks/trust'"),
+            program.replace("'skills/list'", "'turn/start'"),
+            program.replace("stdin=subprocess.PIPE", "shell=True, stdin=subprocess.PIPE"),
+            program.replace("        p.stdin.flush()", "        method = 'hooks/trust'\n        p.stdin.flush()", 1),
+            program.replace("    try:\n", "    print('{\"method\":\"hooks/trust\"}', file=p.stdin, flush=True)\n    try:\n", 1),
+            program.replace("    try:\n", "    print('{\"method\":\"hooks/trust\"}', **{'file': p.stdin})\n    try:\n", 1),
+        ]:
+            with self.subTest(program=changed):
+                self.assertEqual(self.decision(self.hook(tool='Bash', data={'command': "python3 - <<'PY'\n" + changed + '\nPY'})), 'deny')
+
     def test_configured_paths_resolve_shell_aliases(self):
         target = self.home / 'custom client'
         target.mkdir()

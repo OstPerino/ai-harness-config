@@ -80,6 +80,7 @@ codex/agents/security-reviewer.toml
 codex/agents/telegram-manager.toml
 codex/agents/test-dev.toml
 codex/hooks/dispatch.py
+codex/hooks/read_only_python.py
 codex/legacy/guard-net.sh
 codex/legacy/guard-rm.sh
 codex/legacy/guard-write.sh

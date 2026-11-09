@@ -38,6 +38,45 @@ class InstallerCases(unittest.TestCase):
     def manifest(self):
         return json.loads((self.codex / 'harness/manifest.json').read_text())
 
+
+    def test_native_trust_tables_inside_managed_block_survive_update(self):
+        self.codex.mkdir(parents=True)
+        brainstorming = self.skills / 'brainstorming'
+        brainstorming.mkdir(parents=True)
+        (brainstorming / 'SKILL.md').write_text('foreign workflow')
+        self.run_install()
+        config = self.codex / 'config.toml'
+        trust = '\n[hooks.state.synthetic]\ntrusted_hash = "synthetic-original-hash"\n'
+        config.write_text(config.read_text().replace('# <<< ai-harness-config', trust + '# <<< ai-harness-config'))
+        self.run_install()
+        text = config.read_text()
+        self.assertIn(trust.strip(), text)
+        self.assertNotIn('hooks.state', self.manifest()['config_block'])
+        self.run_install()
+        self.assertEqual(config.read_text(), text)
+        self.run_install('--uninstall')
+        self.assertIn(trust.strip(), config.read_text())
+
+    def test_native_trust_does_not_hide_owned_config_edits(self):
+        brainstorming = self.skills / 'brainstorming'
+        brainstorming.mkdir(parents=True)
+        (brainstorming / 'SKILL.md').write_text('foreign workflow')
+        self.run_install()
+        config = self.codex / 'config.toml'
+        original = config.read_text()
+        trust = '\n[hooks.state.synthetic]\ntrusted_hash = "original"\n'
+        cases = [
+            original.replace('enabled = false', 'enabled = true') + trust,
+            original.replace('# <<< ai-harness-config', 'extra = true\n' + trust + '# <<< ai-harness-config'),
+            original.replace('# <<< ai-harness-config', '\n[[skills.config]]\npath = "foreign"\n' + trust + '# <<< ai-harness-config'),
+        ]
+        for changed in cases:
+            with self.subTest(config=changed):
+                config.write_text(changed)
+                for args in [(), ('--uninstall',)]:
+                    self.run_install(*args, success=False)
+                    self.assertEqual(config.read_text(), changed)
+
     def test_dry_run_and_foreign_collision(self):
         self.run_install('--dry-run')
         self.assertFalse(self.home.exists())

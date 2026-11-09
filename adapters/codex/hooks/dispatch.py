@@ -3,8 +3,10 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
+from read_only_python import readonly
 
 BASE = Path(__file__).resolve().parents[1]
 
@@ -58,6 +60,30 @@ def patch_paths(command):
     if not paths:
         raise ValueError('patch has no paths')
     return list(dict.fromkeys(paths))
+
+
+def readonly_shell(command):
+    if any(char in command for char in ('$', '`', '>', '<', '\n', '\\')):
+        return False
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=';&|()')
+    lexer.whitespace_split = True
+    lexer.commenters = ''
+    groups = [[]]
+    for word in lexer:
+        if word in (';', '&&', '||', '|'):
+            if not groups[-1]:
+                return False
+            groups.append([])
+        else:
+            groups[-1].append(word)
+    for words in groups:
+        if not words or words[0] not in ('cat', 'rg'):
+            return False
+        if words[0] == 'rg' and any(word.startswith(('--pre', '--hostname-bin')) for word in words[1:]):
+            return False
+        if any(word and all(char in ';&|()' for char in word) for word in words):
+            return False
+    return True
 
 
 def main():
@@ -142,18 +168,16 @@ def main():
         shell = dict(event, cwd=str(actual_cwd))
         if re.search(r'(\.env(?:\.[\w.-]+)?\b|[~$/]\.ssh\b|[~$/]\.aws\b|[~$/]\.gnupg\b|auth\.json|\.netrc|\.git-credentials|\.npmrc)', command, re.I):
             deny('Command references a protected credential path')
-        if re.search(r'(\.codex/(?:config\.toml|hooks|agents|AGENTS\.md|harness/(?:releases|manifest))|\.agents/skills)', command) and re.search(r'(>|\b(?:tee|cp|mv|rm|install|ln|python\w*|node|perl|ruby)\b|\bsed\s+-i)', command):
-            deny('Command may modify installed harness configuration')
         import shlex
         expanded = os.path.expandvars(command).replace('~/', str(Path.home()) + '/')
         installed = [Path(os.environ.get('CODEX_HOME', Path.home() / '.codex')), Path(os.environ.get('AGENTS_SKILLS_HOME', Path.home() / '.agents/skills'))]
         roots = [resolved(str(path), cwd) for path in installed]
-        mentions_install = any(str(path) in expanded or str(root) in expanded for path, root in zip(installed, roots))
+        mentions_install = bool(re.search(r'(\.codex/(?:config\.toml|hooks|agents|AGENTS\.md|harness/(?:releases|manifest))|\.agents/skills)', command)) or any(str(path) in expanded or str(root) in expanded for path, root in zip(installed, roots))
         for token in shlex.split(expanded):
             candidate = resolved(token.split('=', 1)[-1], actual_cwd)
             if any(candidate == root or root in candidate.parents for root in roots):
                 mentions_install = True
-        if mentions_install and re.search(r'(>|\b(?:tee|cp|mv|rm|install|ln|python\w*|node|perl|ruby)\b|\bsed\s+-i)', command):
+        if mentions_install and re.search(r'(>|\b(?:tee|cp|mv|rm|install|ln|python\w*|node|perl|ruby)\b|\bsed\s+-i)', command) and not readonly(command) and not readonly_shell(command):
             deny('Command may modify configured harness paths')
         for script in ('guard-net.sh', 'guard-rm.sh', 'guard-write.sh'):
             run_legacy(script, shell)
